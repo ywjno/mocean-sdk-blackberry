@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Mojiva BlackBerry SDK" basedir=".">
+	<typedef resource="bb-ant-defs.xml" classpath="lib/bb-ant-tools.jar" />
+	<property file="build.properties" />
+
+	<property name="project" value="Adserver" />
+	<property name="description" value="" />
+	<property name="version" value="1.6.3" />
+	<property name="vendor" value="Team-Force LLC" />
+
+	<property name="src.dir" location="./src" />
+	<property name="build.dir" location="./build" />
+	<property name="release.dir" location="./release" />
+	<property name="res.dir" location="./res" />
+	<property name="lib.dir" location="./lib" />
+	<property name="docs.dir" location="./docs/api" />
+
+	<property name="jde.home" value="${jde.500}" />
+	<property name="jde.classpath" value="${jde.home}/lib/net_rim_api.jar" />
+
+	<property name="adserver.url.mojiva" value="http://ads.mojiva.com/ad?" />
+	<property name="adserver.url.mocean" value="http://ads.mocean.mobi/ad?" />
+
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<mkdir dir="${build.dir}" />
+		<delete dir="${release.dir}" />
+		<mkdir dir="${release.dir}" />
+		<delete dir="${docs.dir}" />
+		<mkdir dir="${docs.dir}" />
+		<delete>
+			<fileset dir="." includes="*.jad" />
+			<fileset dir="." includes="*.zip" />
+		</delete>
+	</target>
+
+	<target name="releaseinfo">
+		<property name="packagename" value="com.adserver.core" />
+		<property name="jreleaseinfoname" value="AdserverURL" />
+		<property name="projectname" value="${ant.project.name}" />
+		<property name="main.class" value="${packagename}.${jreleaseinfoname}" />
+
+		<echo message="Creating ${jreleaseinfoname}.java file in ${src.dir}" />
+		<taskdef name="jreleaseinfo" classname="ch.oscg.jreleaseinfo.anttask.JReleaseInfoAntTask" classpath="${lib.dir}/jreleaseinfo-1.3.0.jar" />
+
+		<jreleaseinfo className="${jreleaseinfoname}" packageName="${packagename}" targetDir="${src.dir}" project="${project}" version="${version}" withViewer="false">
+			<parameter name="url" value="${url}" />
+		</jreleaseinfo>
+	</target>
+
+	<target name="compile_mojiva">
+		<antcall target="compile">
+			<param name="buildName" value="mojiva" />
+			<param name="url" value="${adserver.url.mojiva}" />
+		</antcall>
+	</target>
+
+	<target name="compile_mocean">
+		<antcall target="compile">
+			<param name="buildName" value="mocean" />
+			<param name="url" value="${adserver.url.mocean}" />
+		</antcall>
+	</target>
+
+	<target name="compile">
+		<antcall target="releaseinfo">
+			<param name="url" value="${url}" />
+		</antcall>
+
+		<echo message="Compiling" />
+		<rapc exepath="${jde.home}/bin" output="${project}" destdir="${build.dir}">
+			<jdp type="library" title="${project}" description="${description}" version="${version}" vendor="${vendor}" />
+			<src>
+				<fileset dir="${src.dir}">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${res.dir}">
+					<include name="**/*" />
+				</fileset>
+			</src>
+		</rapc>
+<!--
+		<echo message="Unziping library" />
+		<unzip src="${build.dir}/${project}.jar" dest="${build.dir}/library" />
+		<delete>
+			<fileset dir="${build.dir}/library">
+				<include name="*.cso" />
+				<include name="*.csl" />
+				<include name="*.cod" />
+			</fileset>
+		</delete>
+
+		<echo message="Creating valid manifest" />
+		<property name="manifest.dir" value="${build.dir}/library/META-INF" />
+		<mkdir dir="${manifest.dir}" />
+		<echo file="${manifest.dir}/MANIFEST.MF" message="MIDlet-Name: ${project}${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="Manifest-Version: 1.0${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="MIDlet-Vendor: ${vendor}${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="MIDlet-Version: ${version}${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="Created-By: 1.6.0_21 (Sun Microsystems Inc.)${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="MicroEdition-Configuration: CLDC-1.1${line.separator}" />
+		<echo append="true" file="${manifest.dir}/MANIFEST.MF" message="MIDlet-1: ,,${line.separator}" />
+
+		<echo message="Creating new valid jar" />
+		<zip basedir="${build.dir}/library" compress="false" destfile="${build.dir}/${project}.jar" />
+
+		<echo message="Preverifying new valid jar" />
+		<exec executable="${jde.home}/bin/preverify.exe">
+			<arg line="-classpath ${jde.classpath}" />
+			<arg line="-d ${build.dir}/${buildName}" />
+			<arg line="${build.dir}/${project}.jar" />
+		</exec>
+
+		<echo message="Cleaning" />
+		<delete dir="${build.dir}" includes="*.*" />
+		<delete dir="${build.dir}/library" />
+		<delete dir="${build.dir}/META-INF" />
+-->
+	</target>
+
+	<target name="javadoc">
+		<javadoc access="public" classpath="${jde.classpath}" destdir="${docs.dir}" author="true" version="true" use="true" windowtitle="${project} SDK JavaDoc">
+			<fileset dir="${src.dir}">
+				<include name="**/*.java" />
+			</fileset>
+			<bottom>
+				<![CDATA[<i>&copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.</i>]]></bottom>
+	</javadoc>
+</target>
+
+<target name="release" depends="clean, javadoc">
+	<mkdir dir="${release.dir}/release" />
+
+	<antcall target="release_sources" />
+	<antcall target="compile_mocean" />
+	<antcall target="compile_mojiva" />
+	<antcall target="release_sample">
+		<param name="buildName" value="mojiva" />
+	</antcall>
+	<antcall target="release_sample">
+		<param name="buildName" value="mocean" />
+	</antcall>
+
+	<copy todir="${release.dir}/docs/api">
+		<fileset dir="${docs.dir}" includes="**/*.*" />
+	</copy>
+
+	<copy todir="${release.dir}/release">
+		<fileset dir="${build.dir}" includes="**/*.jar" />
+	</copy>
+
+	<zip destfile="${release.dir}/[BlackBerry] Mojiva SDK ${version}.zip" basedir="${release.dir}" excludes="*.zip" />
+
+	<delete dir="${release.dir}/sources" />
+	<delete dir="${release.dir}/release" />
+	<delete dir="${release.dir}/sample" />
+	<delete dir="${release.dir}/docs" />
+</target>
+
+<target name="release_sources">
+	<property name="release.pack" value="${release.dir}/sources" />
+
+	<mkdir dir="${release.pack}" />
+	<mkdir dir="${release.pack}/.preprocessed" />
+	<mkdir dir="${release.pack}/.settings" />
+	<mkdir dir="${release.pack}/bin" />
+	<mkdir dir="${release.pack}/build" />
+	<mkdir dir="${release.pack}/docs" />
+	<mkdir dir="${release.pack}/lib" />
+	<mkdir dir="${release.pack}/release" />
+	<mkdir dir="${release.pack}/res" />
+	<mkdir dir="${release.pack}/src" />
+
+	<copy todir="${release.pack}/src">
+		<fileset dir="${src.dir}" includes="**/*.java" />
+	</copy>
+	<copy todir="${release.pack}/res">
+		<fileset dir="${res.dir}" includes="**/*" />
+	</copy>
+	<copy todir="${release.pack}/lib">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</copy>
+	<copy todir="${release.pack}/.settings">
+		<fileset dir="${basedir}/.settings" includes="**/*.*" />
+	</copy>
+	<copy file="${basedir}/.classpath" todir="${release.pack}" />
+	<copy file="${basedir}/.project" todir="${release.pack}" />
+	<copy file="${basedir}/BlackBerry_App_Descriptor.xml" todir="${release.pack}" />
+	<copy file="${basedir}/build.properties" todir="${release.pack}" />
+	<copy file="${basedir}/build.xml" todir="${release.pack}" />
+</target>
+
+<target name="release_sample">
+	<unzip src="${basedir}/sample/mojiva_sdk_sample.zip" dest="${release.dir}/sample/${buildName}" />
+	<copy file="${build.dir}/${buildName}/${project}.jar" todir="${release.dir}/sample/${buildName}/lib" />
+</target>
+
+</project>
