@@ -5,7 +5,7 @@
 
 	<property name="project" value="Adserver" />
 	<property name="description" value="" />
-	<property name="version" value="1.6.3" />
+	<property name="version" value="2.0.0 beta" />
 	<property name="vendor" value="Team-Force LLC" />
 
 	<property name="src.dir" location="./src" />
@@ -80,7 +80,7 @@
 				</fileset>
 			</src>
 		</rapc>
-<!--
+
 		<echo message="Unziping library" />
 		<unzip src="${build.dir}/${project}.jar" dest="${build.dir}/library" />
 		<delete>
@@ -116,7 +116,7 @@
 		<delete dir="${build.dir}" includes="*.*" />
 		<delete dir="${build.dir}/library" />
 		<delete dir="${build.dir}/META-INF" />
--->
+
 	</target>
 
 	<target name="javadoc">
