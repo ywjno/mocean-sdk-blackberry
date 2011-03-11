@@ -1,5 +1,7 @@
 package com.adserver.core;
 
+import com.adserver.utils.EventListener;
+
 import net.rim.device.api.browser.field.BrowserContent;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Field;
@@ -12,30 +14,20 @@ import net.rim.device.api.ui.container.FlowFieldManager;
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
  */
-public final class WebView extends FlowFieldManager {
+public class WebView extends FlowFieldManager {
 	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR;
 	private int width = Display.getWidth();
 	private int height = Display.getHeight();
 	private boolean sizeSet = false;
 
 	private Field browserField;
-	public static WebView instance;
 
 	/**
 	 * Constructor
 	 */
 	public WebView() {
 		super(STYLE);
-		instance = this;
 	}
-
-	public static WebView getInstance() {
-		if (null == instance) {
-			instance = new WebView();
-		}
-		return instance;
-	}
-
 
 	/**
 	 * Init webview with browser content
@@ -74,4 +66,5 @@ public final class WebView extends FlowFieldManager {
 		sizeSet = true;
 		super.sublayout(width, height);
 	}
+	
 }

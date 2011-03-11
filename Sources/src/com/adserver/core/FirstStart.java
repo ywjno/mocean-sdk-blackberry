@@ -12,25 +12,19 @@ import com.adserver.utils.URLParamEncoder;
  * Rights Reserved.
  */
 public class FirstStart extends Thread {
-//	private final static String URL = "http://www.mojiva.com/installnotify.php?";
 	private final static String URL = "http://www.moceanmobile.com/appconversion.php?";
 	private final static long STORAGE_ID = 0xE984EDEF6F11B8C8L;
 	private final static PersistentObject store = PersistentStore
 			.getPersistentObject(STORAGE_ID);
 
-//	private String campaign = "";
-	private String refferer = "";
-//	private String appID = "";
-	private String zone = "";
+	String advertiserId = "";
+	String groupCode = "";
 
-	public FirstStart(String refferer, String zone) {
-//	public FirstStart(String campaign, String refferer, String appID, String zone) {
+	public FirstStart(String advertiserId, String groupCode) {
 		super();
 
-//		this.appID = appID;
-//		this.campaign = campaign;
-		this.refferer = refferer;
-		this.zone = zone;
+		this.advertiserId = advertiserId;
+		this.groupCode = groupCode;
 
 		setPriority(Thread.MIN_PRIORITY);
 		if (!checkFirstStart()) {
@@ -54,7 +48,9 @@ public class FirstStart extends Thread {
 	}
 
 	public final void run() {
+		System.out.println("Install notification URL = " + URL + getQueryString());
 		byte[] result = HttpUtils.download(URL + getQueryString());
+		System.out.println("Install notification result " + new String(result));
 		if (null != result && result.length > 0 && '0' == (char) result[0]) {
 			markFirstStart();
 		}
@@ -73,17 +69,11 @@ public class FirstStart extends Thread {
 
 	private String getQueryString() {
 		URLParamEncoder params = new URLParamEncoder();
-//		params.addParam("appId", appID);
-//		params.addParam("campaign", campaign);
-		params.addParam("refferer", refferer);
-		params.addParam("zone", zone);
-		params.addParam("deviceuid", DeviceInfo.getDeviceId());
-		
+		params.addParam("advertiser_id", advertiserId);
+		params.addParam("group_code", groupCode);
+		int deviceId = DeviceInfo.getDeviceId();
+		params.addParam("udid", CacheManager.getMD5Hash(Integer.toString(deviceId)));
 
-		return '?' + params.toString();
-	}
-	
-	private String md5Encoding (String input) {
-		return null;
+		return params.toString();
 	}
 }
