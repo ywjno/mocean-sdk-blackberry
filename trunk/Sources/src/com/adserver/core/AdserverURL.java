@@ -1,5 +1,5 @@
 /* Created by JReleaseInfo AntTask from Open Source Competence Group */
-/* Creation date Thu Feb 10 11:54:42 MSK 2011 */
+/* Creation date Fri Mar 11 17:34:56 MSK 2011 */
 package com.adserver.core;
 
 import java.util.Date;
@@ -12,11 +12,11 @@ import java.util.Date;
 public class AdserverURL {
 
 
-   /** buildDate (set during build process to 1297328082720L). */
-   private static Date buildDate = new Date(1297328082720L);
+   /** buildDate (set during build process to 1299854096784L). */
+   private static Date buildDate = new Date(1299854096784L);
 
    /**
-    * Get buildDate (set during build process to Thu Feb 10 11:54:42 MSK 2011).
+    * Get buildDate (set during build process to Fri Mar 11 17:34:56 MSK 2011).
     * @return Date buildDate
     */
    public static final Date getBuildDate() { return buildDate; }
@@ -32,11 +32,11 @@ public class AdserverURL {
    public static final String getProject() { return project; }
 
 
-   /** version (set during build process to "1.6.3"). */
-   private static String version = "1.6.3";
+   /** version (set during build process to "2.0.0 beta"). */
+   private static String version = "2.0.0 beta";
 
    /**
-    * Get version (set during build process to "1.6.3").
+    * Get version (set during build process to "2.0.0 beta").
     * @return String version
     */
    public static final String getVersion() { return version; }

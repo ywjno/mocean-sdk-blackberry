@@ -1,506 +1,734 @@
 package com.adserver.core;
 
+import java.util.Enumeration;
+import java.util.Hashtable;
+
 import com.adserver.utils.Constants;
 import com.adserver.utils.URLParamEncoder;
 
-/**
- * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
- */
 public class AdserverRequest {
+	private Hashtable parameters = new Hashtable();
+	private final String parameter_site = "site";
+	private final String parameter_zone = "zone";
+	private final String parameter_userAgent = "ua";
+	private final String parameter_keywords = "keywords";
+	private final String parameter_premium = "premium";
+	private final String parameter_test = "test";
+	private final String parameter_count = "count";
+	private final String parameter_country = "country";
+	private final String parameter_region = "region";
+	private final String parameter_city = "city";
+	private final String parameter_area = "area";
+	private final String parameter_metro = "metro";
+	private final String parameter_zip = "ZIP";
+	private final String parameter_adstype = "adstype";
+	private final String parameter_latitude = "lat";
+	private final String parameter_longitude = "long";
+	private final String parameter_background = "paramBG";
+	private final String parameter_link = "paramLINK";
+	private final String parameter_carrier = "carrier";
+	private final String parameter_min_size_x = "min_size_x";
+	private final String parameter_min_size_y = "min_size_y";
+	private final String parameter_size_x = "size_x";
+	private final String parameter_size_y = "size_y";
+	private final String parameter_excampaigns = "excampaigns";
+	private final String parameter_version = "version";
+	private final String parameter_connection_speed = "connection_speed";
+	private final String parameter_size_required = "size_required";
 
+	private Hashtable customParameters;
 
-	/**
-	 * Filter by non-premium
-	 */
-	public final static int			PREMIUM_STATUS_NON_PREMIUM		= 0;
+	private String adServerUrl = "http://ads.mocean.mobi/ad?";
 
-	/**
-	 * Filter by premium only
-	 */
-	public final static int			PREMIUM_STATUS_PREMIUM			= 1;
-
-	/**
-	 * Filter by premium both
-	 */
-	public final static int			PREMIUM_STATUS_BOTH				= 2;
-
-	/**
-	 * Normal output format
-	 */
-	public final static int			OUTPUT_FORMAT_NORMAL			= 1;
-
-	/**
-	 * XML output format
-	 */
-	public final static int			OUTPUT_FORMAT_XML				= 3;
-
-	/**
-	 * JSON output format
-	 */
-	public final static int			OUTPUT_FORMAT_JSON				= 5;
-
-	/**
-	 * Text advertisement
-	 */
-	public final static int			ADS_TYPE_TEXT_ONLY				= 1;
-
-	/**
-	 * Image advertisement
-	 */
-	public final static int			ADS_TYPE_IMAGES_ONLY			= 2;
-
-	/**
-	 * Text and image advertisement
-	 */
-	public final static int			ADS_TYPE_TEXT_AND_IMAGES		= 3;
-
-	/**
-	 * SMS advertisement
-	 */
-	public final static int			ADS_TYPE_SMS					= 3;
-
-	/**
-	 * Filter by ad: deny only over 18 content
-	 */
-	public final static int			OVER_18_TYPE_ONLY				= 2;
-
-	/**
-	 * Not filter ad
-	 */
-	public final static int			OVER_18_TYPE_ALL				= 3;
-
-	/**
-	 * Smallest banner
-	 */
-	public final static int			IMAGE_SIZE_SMALLEST				= 1;
-
-	/**
-	 * Largest banner
-	 */
-	public final static int			IMAGE_SIZE_LARGEST				= 4;
-
-	/**
-	 * Open the linked document in a new window
-	 */
-	public final static String		TARGET_BLANK					= "_blank";
-
-	/**
-	 * Open the linked document in the same frame
-	 */
-	public final static String		TARGET_SELF						= "_self";
-
-	/**
-	 * Open the linked document in the parent frameset
-	 */
-	public final static String		TARGET_PARENT					= "_parent";
-
-	/**
-	 * Open the linked document in the full body of the window
-	 */
-	public final static String		TARGET_TOP						= "_top";
-
-	/**
-	 * Event occur when downloaded ads and initialized browser
-	 */
-	public final static int			EVENT_BROWSER_FIELD				= 1;
-
-	/**
-	 * Event occur when no network on mobile device
-	 */
-	public final static int			EVENT_NO_NETWORK				= 2;
-
-	/**
-	 * Event occur when the remote server is not responding
-	 */
-	public final static int			EVENT_ERROR_WITH_REMOTE_SERVER	= 3;
-
-	/**
-	 * Default arguments
-	 */
-	private final static String		DEFAULT_SITE					= "5441";
-	private final static String		DEFAULT_ZONE					= "6365";
-	private final static Integer	DEFAULT_PREMIUM					= new Integer(PREMIUM_STATUS_NON_PREMIUM);
-	private final static Boolean	DEFAULT_TEST_MODE				= Boolean.FALSE;
-	private final static Boolean	DEFAULT_TEXT_BORDER				= Boolean.FALSE;
-	private final static Integer	DEFAULT_IMAGE_SIZE				= new Integer(1);
-	private final static String		DEFAULT_URL						= "http://ads.moblin.com/ad";
-	private final static Boolean	DEFAULT_PIXEL_MODE				= Boolean.FALSE;
-
-
-//  Required	
-	/**
-	 * The id of the publisher site (default: DEFAULT_SITE).
-	 */
-	public static String					site							= null;
-
-	/**
-	 * The id of the zone of publisher site (default: DEFAULT_ZONE).
-	 */
-	public static String					zone							= null;
-
-//	Required (autedetect)
-	/**
-	 * The browser user agent of the device making the request.
-	 */
-	public static String					ua								= null;
-
-//  Optional
-	/**
-	 * Default setting is test mode where, if the ad code is properly installed, the ad response is "Test MODE" (default:
-	 * DEFAULT_TEST_MODE).
-	 */
-	public static String					testMode						= null;
-
-	/**
-	 * Filter by premium (PREMIUM_STATUS_NON_PREMIUM - non-premium, PREMIUM_STATUS_PREMIUM - premium only, PREMIUM_STATUS_BOTH -
-	 * both).<br>
-	 * Can be used only by premium publishers.
-	 */
-	public static Integer					premium							= null;
-
-	/**
-	 * Keywords to search ad delimited by commas.
-	 */
-	public static String					keywords						= null;
-
-	/**
-	 * Minimal width of the ad banner to be shown
-	 */
-	public static Integer					minSizeX							= null;
-
-	/**
-	 * Minimal height of the ad banner to be shown
-	 */
-	public static Integer					minSizeY							= null;
-
-	/**
-	 * Maximal width of the ad banner to be shown
-	 */
-	public static Integer					maxSizeX							= null;
-
-	/**
-	 * Maximal width of the ad banner to be shown
-	 */
-	public static Integer					maxSizeY							= null;
-
-	/**
-	 * Background color (#XXXXXX)
-	 */
-	public static String					paramBG							= null;
-
-	/**
-	 * Link color (#XXXXXX)
-	 */
-	public static String					paramLINK						= null;
-
-	/**
-	 * CustomParameters comma separated
-	 */
-	public static String			customParameters				= "";
-
-	/**
-	 * Maximal width of the ad banner to be shown
-	 */
-	public static String adServerUrl = null;
-
-
-	//GEO Optional
-	/**
-	 * Country of visitor. Will override country detected by IP. (http://www.mojiva.com/docs/iso3166.csv)
-	 */
-	public static String					latitude						= null;
-	/**
-	 * User location longtitude value (given in degrees.decimal degrees). It’s used together with ’lat’ parameter.
-	 */
-	public static String					longitude						= null;
-
-	/**
-	 * Country of visitor. Will override country detected by IP. (http://www.mojiva.com/docs/iso3166.csv)
-	 */
-	public static String					country							= null;
-
-	/**
-	 * Region of visitor. Codes for US and Canada - http://www.mojiva.com/docs/iso3166_2.csv, others -
-	 * http://www.mojiva.com/docs/fips10_4.csv.
-	 */
-	public static String					region							= null;
-
-	/**
-	 * City of the device user (with state). For US only.
-	 */
-	public static String					city							= null;
-
-	/**
-	 * Area code of a user. For US only
-	 */
-	public static String					area							= null;
-
-	/**
-	 * Metro code of a user. For US only
-	 */
-	public static String					metro							= null;
-
-	/**
-	 * Zip/Postal code of user (note: parameter is all caps). For US only.
-	 */
-	public static String					zip							= null;
-
-	/**
-	 * User carrier.
-	 */
-	public static String					carrier							= null;
-
-	/**
-	 * 0 - low (gprs, edge), 1 - fast (3g, wifi).
-	 */
-	public static Integer connectionSpeed 									= null;
-
-	//	Internal
-	/**
-	 * Set to 1. Output format. Normal format uses key = 1. Parameter key should be set to 3 in order to use XML output and to 5 in order to use JSON output.
-	 */
-	public static Integer					key								= Constants.KEY;
+	public String getAdServerUrl() {
+		return adServerUrl;
+	}
 	
-	/**
-	 * Set to 3. Type of ads (1 - text only, 2 - image only, 3 - image and text, 6 - SMS ad). SMS will be ONLY returned in XML and should be used along with key=3.
-	 */
-	public static Integer					adsType							= null;
+	public void setAdServerUrl(String adServerUrl){
+		this.adServerUrl = adServerUrl;
+	}
+
+	public AdserverRequest() {
+	}
 	
-	/**
-	 * Set to 1. Count of ads. Default = 1
-	 */
-	public static Integer					count							= null;
+	public AdserverRequest(String site, String zone) {
+		setSite(site);
+		setZone(zone);
+	}
+
+//	/**
+//	 * Get URL of ad server.
+//	 * @return
+//	 */
+//	public synchronized String getAdserverURL() {
+//		return adserverURL;
+//	}
+//
+//	/**
+//	 * Overrides the URL of ad server.
+//	 * @param adserverURL
+//	 */
+//	public synchronized void setAdserverURL(String adserverURL) {
+//		if((adserverURL != null) && (adserverURL.length() > 0)) {
+//			this.adserverURL = adserverURL;
+//		}
+//	}
 
 	/**
-	 * SDK version
-	 */
-	public static String					version							= null;
-	
-	
-	
-	/**
-	 * Constructor
-	 * 
+	 * Required.
+	 * Set the id of the publisher site. 
 	 * @param site
-	 *            The id of the publisher site (default: DEFAULT_SITE).
-	 * @param zone
-	 *            The id of the zone of publisher site (default: DEFAULT_ZONE).
-	 * @param keywords
-	 *            Keywords to search ad delimited by commas.
-	 * @param latitude
-	 * @param longitude
+	 *            Id of the site assigned by Adserver
+	 * @return
+	 */
+	public AdserverRequest setSite(String site) {
+		if(site != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_site, site);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set the browser user agent of the device making the request.
 	 * @param ua
-	 *            The browser user agent of the device making the request.
+	 * @return
+	 */
+	public AdserverRequest setUa(String ua) {
+		if(ua != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_userAgent, ua);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Keywords to search ad delimited by commas.
+	 * @param keywords
+	 * @return
+	 */
+	public AdserverRequest setKeywords(String keywords) {
+		if(keywords != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_keywords, keywords);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Filter by premium (PREMIUM_STATUS_NON_PREMIUM - non-premium, 
+	 * PREMIUM_STATUS_PREMIUM - premium only, PREMIUM_STATUS_BOTH - both). 
+	 * Can be used only by premium publishers.
 	 * @param premium
-	 *            Filter by premium (PREMIUM_STATUS_NON_PREMIUM - non-premium, PREMIUM_STATUS_PREMIUM - premium only,
-	 *            PREMIUM_STATUS_BOTH - both).<br>
-	 *            Can be used only by premium publishers.
-	 * @param testMode
-	 *            Default setting is test mode where, if the ad code is properly installed, the ad response is "Test MODE"
-	 *            (default: DEFAULT_TEST_MODE).
+	 * @return
+	 */
+	public AdserverRequest setPremium(Integer premium) {
+		if(premium != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_premium, String.valueOf(premium));
+			}
+		}
+		return this;	
+	}
+
+	/**
+	 * Required.
+	 * Set the id of the zone of publisher site.
+	 * @param zone
+	 * @return
+	 */
+	public AdserverRequest setZone(String zone) {
+		if(zone != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_zone, zone);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Default setting is test mode where, if the ad code is properly installed, 
+	 * the ad response is "Test MODE".
+	 * @param enabled
+	 * @return
+	 */
+	public AdserverRequest setTestModeEnabled(Boolean enabled) {
+		if(enabled != null) {
+			synchronized(parameters) {
+				if(enabled.booleanValue()) {
+					parameters.put(parameter_test, "1");
+				} else {
+					parameters.put(parameter_test, "0");
+				}
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Quantity of ads, returned by a server. Maximum value is 5.
+	 * @param count
+	 * @return
+	 */
+	public AdserverRequest setCount(Integer count) {
+		if(count != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_count, String.valueOf(count));
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Country of visitor. See codes here (http://www.mojiva.com/docs/iso3166.csv). 
+	 * Will override country detected by IP. 
 	 * @param country
-	 *            Country of visitor. Will override country detected by IP. (http://www.mojiva.com/docs/iso3166.csv)
+	 * @return
+	 */
+	public AdserverRequest setCountry(String country) {
+		if(country != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_country, country);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Region of visitor. See codes for US and Canada here (http://www.mojiva.com/docs/iso3166_2.csv), 
+	 * others - here (http://www.mojiva.com/docs/fips10_4.csv). 
 	 * @param region
-	 *            Region of visitor. Codes for US and Canada - http://www.mojiva.com/docs/iso3166_2.csv, others -
-	 *            http://www.mojiva.com/docs/fips10_4.csv.
+	 * @return
+	 */
+	public AdserverRequest setRegion(String region) {
+		if(region != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_region, region);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set City of the device user (with state). For US only. 
+	 * @param city
+	 * @return
+	 */
+	public AdserverRequest setCity(String city) {
+		if(city != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_city, city);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Area code of a user. For US only. 
+	 * @param area
+	 * @return
+	 */
+	public AdserverRequest setArea(String area) {
+		if(area != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_area, area);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Metro code of a user. For US only. 
+	 * @param metro
+	 * @return
+	 */
+	public AdserverRequest setMetro(String metro) {
+		if(metro != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_metro, metro);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Zip/Postal code of user. For US only. 
+	 * @param zip
+	 * @return
+	 */
+	public AdserverRequest setZip(String zip) {
+		if(zip != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_zip, zip);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Type of advertisement (ADS_TYPE_TEXT_ONLY - text only, 
+	 * ADS_TYPE_IMAGES_ONLY - image only, ADS_TYPE_TEXT_AND_IMAGES - image and text, 
+	 * ADS_TYPE_SMS - SMS ad). SMS will be returned in XML.
+	 * @param adstype
+	 * @return
+	 */
+	public AdserverRequest setAdstype(Integer adstype) {
+		if(adstype != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_adstype, String.valueOf(adstype));
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Latitude.
+	 * @param latitude
+	 * @return
+	 */
+	public AdserverRequest setLatitude(String latitude) {
+		if(latitude != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_latitude, latitude);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Longitude.
+	 * @param longitude
+	 * @return
+	 */
+	public AdserverRequest setLongitude(String longitude) {
+		if(longitude != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_longitude, longitude);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Background color in borders.
 	 * @param paramBG
-	 *            Background color (#XXXXXX)
+	 * @return
+	 */
+	public AdserverRequest setParamBG(String paramBG) {
+		if(paramBG != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_background, paramBG);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set Text color.
 	 * @param paramLINK
-	 *            Link color (#XXXXXX)
+	 * @return
+	 */
+	public AdserverRequest setParamLINK(String paramLINK) {
+		if(paramLINK != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_link, paramLINK);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set Carrier name.
 	 * @param carrier
-	 *            Carrier name
-	 * @param url
-	 *            URL of site for which it is necessary to receive advertising.
+	 * @return
 	 */
-	public AdserverRequest(String site, String zone, String keywords,
-			String latitude, String longitude, String ua, Integer premium, String testMode,
-			String country, String region, String paramBG, String paramLINK,
-			String carrier, String url, String customParameters) {
-
-		
-		AdserverRequest.site = checkStringValue(site, DEFAULT_SITE);
-		AdserverRequest.zone = checkStringValue(zone, DEFAULT_ZONE);
-		AdserverRequest.ua = ua;
-		AdserverRequest.testMode = checkStringValue(testMode, "0");
-		AdserverRequest.premium = checkIntegerValue(premium, null);
-		AdserverRequest.keywords = keywords;
-		AdserverRequest.minSizeX = checkIntegerValue(minSizeX, null);
-		AdserverRequest.minSizeY = checkIntegerValue(minSizeY, null);
-		AdserverRequest.maxSizeX = checkIntegerValue(maxSizeX, null);
-		AdserverRequest.maxSizeY = checkIntegerValue(maxSizeY, null);
-		AdserverRequest.paramBG = paramBG;
-		AdserverRequest.paramLINK = paramLINK;
-		AdserverRequest.customParameters = customParameters;
-		AdserverRequest.adServerUrl = AdserverURL.getUrl();
-		AdserverRequest.latitude = latitude;
-		AdserverRequest.longitude = longitude;
-		AdserverRequest.country = country;
-		AdserverRequest.region = region;
-//		AdserverRequest.city = city;
-//		AdserverRequest.area = area;
-//		AdserverRequest.metro = metro;
-//		AdserverRequest.zip = zip;
-		AdserverRequest.carrier = carrier;
-		AdserverRequest.connectionSpeed = checkIntegerValue(connectionSpeed, null);
-		AdserverRequest.key = Constants.KEY;
-		AdserverRequest.adsType = Constants.ADS_TYPE;
-		AdserverRequest.count = Constants.COUNT;
+	public AdserverRequest setCarrier(String carrier) {
+		if(carrier != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_carrier, carrier);
+			}
+		}
+		return this;
+	}
+	
+	/**
+	 * Optional.
+	 * Set minimum width of advertising. 
+	 * @param minSizeX
+	 * @return
+	 */
+	public AdserverRequest setMinSizeX(Integer minSizeX) {
+		if(minSizeX != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_min_size_x, String.valueOf(minSizeX));
+			}
+		}
+		return this;	
 	}
 
 	/**
-	 * Build result URL
-	 * 
-	 * @return URL
+	 * Optional.
+	 * Set minimum height of advertising. 
+	 * @param minSizeY
+	 * @return
 	 */
-	public static String createURL() {
+	public AdserverRequest setMinSizeY(Integer minSizeY) {
+		if(minSizeY != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_min_size_y, String.valueOf(minSizeY));
+			}
+		}
+		return this;	
+	}
 
+	/**
+	 * Optional.
+	 * Set maximum width of advertising. 
+	 * @param sizeX
+	 * @return
+	 */
+	public AdserverRequest setSizeX(Integer sizeX) {
+		if(sizeX != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_size_x, String.valueOf(sizeX));
+			}
+		}
+		return this;	
+	}
+
+	/**
+	 * Optional.
+	 * Set maximum height of advertising. 
+	 * @param sizeY
+	 * @return
+	 */
+	public AdserverRequest setSizeY(Integer sizeY) {
+		if(sizeY != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_size_y, String.valueOf(sizeY));
+			}
+		}
+		return this;	
+	}
+
+	/**
+	 * Optional.
+	 * Parameter excampaigns should allow excluding the list of campaigns from the result by ID. 
+	 * @param excampaigns
+	 * @return
+	 */
+	public AdserverRequest setExcampaigns(String excampaigns) {
+		if((excampaigns != null) && (excampaigns.length() > 0)) {
+			synchronized(parameters) {
+				parameters.put(parameter_excampaigns, excampaigns);
+			}
+		}
+		return this;	
+	}
+	
+	/**
+	 * Optional.
+	 * Set SDK version. 
+	 * @param version
+	 * @return
+	 */
+	public AdserverRequest setVersion(String version) {
+		if(version != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_version, version);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * Set connection speed. 0 - low (gprs, edge), 1 - fast (3g, wifi). 
+	 * @param connectionSpeed
+	 * @return
+	 */
+	public AdserverRequest setConnectionSpeed(Integer connectionSpeed) {
+		if(connectionSpeed != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_connection_speed, String.valueOf(connectionSpeed));
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * Optional.
+	 * If set to 1, return image size (width and height) in html. 
+	 * @param sizeRequired
+	 * @return
+	 */
+	public AdserverRequest setSizeRequired(Integer sizeRequired) {
+		if(sizeRequired != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_size_required, String.valueOf(sizeRequired));
+			}
+		}
+		return this;
+	}
+	
+	public String getSite() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_site);
+		}
+	}
+
+	public String getUa() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_userAgent);
+		}
+	}
+	
+	public String getKeywords() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_keywords);
+		}
+	}
+
+	public Integer getPremium() {
+		synchronized(parameters) {
+			String premium = (String)parameters.get(parameter_premium);
+			return getIntParameter(premium);
+		}
+	}
+
+	public String getZone() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_zone);
+		}
+	}
+	
+	public Boolean getTestModeEnabled() {
+		synchronized(parameters) {
+			String test = (String)parameters.get(parameter_test);
+			if(test != null) {
+				if(test.equals("1")) {
+					return Boolean.TRUE;
+				} else {
+					return Boolean.FALSE;
+				}
+			} else {
+				return Boolean.FALSE;
+			}
+		}
+	}
+	
+	public Integer getCount() {
+		synchronized(parameters) {
+			String count = (String)parameters.get(parameter_count);
+			return getIntParameter(count);
+		}
+	}
+
+	public String getCountry() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_country);
+		}
+	}
+	
+	public String getRegion() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_region);
+		}
+	}
+
+	public String getCity() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_city);
+		}
+	}
+
+	public String getArea() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_area);
+		}
+	}
+
+	public String getMetro() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_metro);
+		}
+	}
+
+	public String getZip() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_zip);
+		}
+	}
+	
+	public Integer getAdstype() {
+		synchronized(parameters) {
+			String adstype = (String)parameters.get(parameter_adstype);
+			return getIntParameter(adstype);
+		}
+	}
+	
+	public String getLatitude() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_latitude);
+		}
+	}
+
+	public String getLongitude() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_longitude);
+		}
+	}
+
+	public String getParamBG() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_background);
+		}
+	}
+
+	public String getParamLINK() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_link);
+		}
+	}
+	
+	public String getCarrier() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_carrier);
+		}
+	}
+
+	public Integer getMinSizeX() {
+		synchronized(parameters) {
+			String minSizeX = (String)parameters.get(parameter_min_size_x);
+			return getIntParameter(minSizeX);
+		}
+	}
+
+	public Integer getMinSizeY() {
+		synchronized(parameters) {
+			String minSizeY = (String)parameters.get(parameter_min_size_y);
+			return getIntParameter(minSizeY);
+		}
+	}
+
+	public Integer getSizeX() {
+		synchronized(parameters) {
+			String sizeX = (String)parameters.get(parameter_size_x);
+			return getIntParameter(sizeX);
+		}
+	}
+
+	public Integer getSizeY() {
+		synchronized(parameters) {
+			String sizeY = (String)parameters.get(parameter_size_y);
+			return getIntParameter(sizeY);
+		}
+	}
+	
+	public String getExcampaigns() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_excampaigns);
+		}
+	}
+	
+	public String getVersion() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_version);
+		}
+	}
+
+	public Integer getConnectionSpeed() {
+		synchronized(parameters) {
+			String connectionSpeed = (String)parameters.get(parameter_connection_speed);
+			return getIntParameter(connectionSpeed);
+		}
+	}
+
+	public Integer getSizeRequired() {
+		synchronized(parameters) {
+			String sizeRequired = (String)parameters.get(parameter_size_required);
+			return getIntParameter(sizeRequired);
+		}
+	}
+	
+	/**
+	 * Optional.
+	 * Set Custom parameters.
+	 * @param customParameters
+	 * @return
+	 */
+	public void setCustomParameters(Hashtable customParameters) {
+		this.customParameters = customParameters;
+	}
+
+	public Hashtable getCustomParameters() {
+		return customParameters;
+	}
+
+
+	private Integer getIntParameter(String stringValue) {
+		if(stringValue != null) {
+			return new Integer(Integer.parseInt(stringValue));
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Creates URL with given parameters.
+	 * @return
+	 * @throws IllegalStateException if all the required parameters are not present.
+	 */
+	public synchronized String createURL() throws IllegalStateException
+	{
 		URLParamEncoder encoder = new URLParamEncoder();
+		Enumeration keys;
+		String key;
+		String value;
+		//Iterate Parameters
+		keys = parameters.keys();
+		while (keys.hasMoreElements()) {
+			key = (String) keys.nextElement();
+			value = (String) parameters.get(key);
+			if (null != value) encoder.addParam(key, value);
+		}
 
-		if (null != site) {
-			// The id of the publisher site (default: DEFAULT_SITE).
-			encoder.addParam("site", site);
-		}
-		if (null != zone) {
-			// The id of the zone of publisher site (default: DEFAULT_ZONE).
-			encoder.addParam("zone", zone);
-		}
-		if (null != ua) {
-			// The browser user agent of the device making the request.
-			encoder.addParam("ua", ua);
-		}
-		if (null != testMode) {
-			// Default setting is test mode where, if the ad code is properly installed, the ad response is "Test MODE" (default: DEFAULT_TEST_MODE).
-			encoder.addParam("test", testMode);
-		}
-		if (null != premium) {
-			// Filter by premium:
-			//      PREMIUM_STATUS_NON_PREMIUM - non-premium,
-			//      PREMIUM_STATUS_PREMIUM - premium only,
-			//      PREMIUM_STATUS_BOTH - both).
-			encoder.addParam("premium", premium.intValue());
-		}
-		if (null != keywords) {
-			// Keywords to search ad delimited by commas.
-			encoder.addParam("keywords", keywords);
-		}
-		if (null != minSizeX) {
-			encoder.addParam("min_size_x", minSizeX.intValue());
-		}
-		if (null != minSizeY) {
-			encoder.addParam("min_size_y", minSizeY.intValue());
-		}
-		if (null != maxSizeX) {
-			encoder.addParam("size_x", maxSizeX.intValue());
-		}
-		if (null != maxSizeX) {
-			encoder.addParam("size_y", maxSizeX.intValue());
-		}
-		if (null != paramBG) {
-			// Background color (#XXXXXX)
-			encoder.addParam("paramBG", paramBG);
-		}
-		if (null != paramLINK) {
-			// Background color (#XXXXXX)
-			encoder.addParam("paramLINK", paramLINK);
-		}
+		//Iterate Custom Parameters
 		if (null != customParameters) {
-			//Custom Parameters comma separated
-			encoder.addParam("customParameters", customParameters);
+			keys = customParameters.keys();
+			while (keys.hasMoreElements()) {
+				key = (String) keys.nextElement();
+				value = (String) customParameters.get(key);
+				if (null != value) encoder.addParam(key, value);
+			}
 		}
-		if (null != latitude) {
-			encoder.addParam("lat", latitude);
-		}
-		if (null != longitude) {
-			encoder.addParam("long", longitude);
-		}
-		if (null != country) {
-			// Country of visitor. Will override country detected by IP. (http://www.mojiva.com/docs/iso3166.csv)
-			encoder.addParam("country", country);
-		}
-		if (null != region) {
-			// Region of visitor. Codes for US and Canada - http://www.mojiva.com/docs/iso3166_2.csv, others - http://www.mojiva.com/docs/fips10_4.csv.
-			encoder.addParam("region", region.toUpperCase());
-		}
-		if (null != carrier) {
-			// Carrier name
-			encoder.addParam("carrier", carrier);
-		}
-		if (null != city) {
-			encoder.addParam("city", city);
-		}
-		if (null != area) {
-			encoder.addParam("area", area);
-		}
-		if (null != metro) {
-			encoder.addParam("metro", metro);
-		}
-		if (null != zip) {
-			encoder.addParam("ZIP", zip);
-		}
-		if (null != carrier) {
-			encoder.addParam("carier", carrier);
-		}
-		if (null != connectionSpeed) {
-			encoder.addParam("connection_speed", connectionSpeed.toString());
-		}
-
-		if (null != key) {
-			encoder.addParam("key", key.intValue());
-		}
-		if (null != adsType) {
-			// Type of advertisement:
-			//      ADS_TYPE_TEXT_ONLY - text only,
-			//      ADS_TYPE_IMAGES_ONLY - image only,
-			//      ADS_TYPE_TEXT_AND_IMAGES - image and text,
-			//      ADS_TYPE_SMS - SMS ad, default - DEFAULT_ADS_TYPE).
-			encoder.addParam("adstype", adsType.intValue());
-		}
-		if (null != count) {
-			// Quantity of ads, returned by a server (Maximum: 5; Default: DEFAULT_COUNT).
-			encoder.addParam("count", count.intValue());
-		}
+		//Pre-defined
+		encoder.addParam("key", Constants.KEY.intValue());
+		encoder.addParam("adstype", Constants.ADS_TYPE.intValue());
+		encoder.addParam("count", Constants.COUNT.intValue());
 		//SDK vertion 
-		encoder.addParam("version", Constants.VERSION);
-		
-		return adServerUrl + encoder.toString();
-	}
+		encoder.addParam("version", AdserverURL.getVersion());
 
-	/**
-	 * Check String value
-	 * 
-	 * @param value
-	 *            Check value
-	 * @param defaultValue
-	 *            returns if checking value fail
-	 * @return checked value
-	 */
-	public static String checkStringValue(final String value, final String defaultValue) {
-		return (null != value && value.length() > 0) ? value : defaultValue;
-	}
-
-	/**
-	 * Check Boolean value
-	 * 
-	 * @param value
-	 *            Check value
-	 * @param defaultValue
-	 *            returns if checking value fail
-	 * @return checked value
-	 */
-	public static Boolean checkBooleanValue(final Boolean value, final Boolean defaultValue) {
-		return (null != value) ? value : defaultValue;
-	}
-
-	/**
-	 * Check Integer value
-	 * 
-	 * @param value
-	 *            Check value
-	 * @param defaultValue
-	 *            returns if checking value fail
-	 * @return checked value
-	 */
-	public static Integer checkIntegerValue(final Integer value, final Integer defaultValue) {
-		return (null != value) ? value : defaultValue;
+		return getAdServerUrl() + encoder.toString();
 	}
 }

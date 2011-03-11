@@ -1,5 +1,7 @@
 package com.adserver.core;
 
+import java.util.Hashtable;
+
 import javax.microedition.location.Coordinates;
 
 import net.rim.device.api.i18n.Locale;
@@ -14,6 +16,7 @@ import com.adserver.utils.LocationManager;
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
  */
 public class Adserver extends AdserverBase {
+	
 	/**
 	 * @param appID
 	 *            Deprecated.
@@ -100,8 +103,8 @@ public class Adserver extends AdserverBase {
 			String hashId, String defaultImage, Boolean internalBrowser,
 			AdClickListener clickListener, Integer updateTime, String customParameters) {
 		super(mode, site, zone, keywords,
-				null == latitude ? getLatitude() : latitude, null == longitude ? getLongitude() : longitude, getUA(),
-				premium, test == Boolean.TRUE ? "1" : "0", null == country ? getCountry() : country, region,
+				null == latitude ? getLatitudeDetected() : latitude, null == longitude ? getLongitudeDetected() : longitude, getUADetected(),
+				premium, test == Boolean.TRUE ? "1" : "0", null == country ? getCountryDetected() : country, region,
 				backgroundColor, textColor, carrier, url, hashId,
 				defaultImage, internalBrowser, clickListener, updateTime, customParameters);
 	}
@@ -115,48 +118,45 @@ public class Adserver extends AdserverBase {
 
 	public Adserver (String site, String zone) {
 		super (3, site, zone, null,
-			   getLatitude(), getLongitude(), getUA(),
-			   null, "0", getCountry(), null,
-			   null, null, null, null, 
+			   getLatitudeDetected(), getLongitudeDetected(), getUADetected(),
+			   null, "0", getCountryDetected(), null,
+			   null, null, getCarrierDetected(), null, 
 			   "test", "defaultImage", Boolean.FALSE, 
 			   null, null, null);
 		}
+	
+//	public Adserver (String site, String zone, Boolean test, Integer premium, String keywords, Integer minSizeX, Integer minSizeY, Integer maxSizeX, Integer maxSizeY,
+//					String backgroundColor,String textColor, Hashtable customParameters) {
+//		super(3, site, zone, keywords, getLatitudeDetected(), getLongitudeDetected(), getUADetected(), premium, test == Boolean.TRUE ? "1" : "0", getCountryDetected(), null,
+//				backgroundColor, textColor, getCarrierDetected(), null, "test", "defaultImage", Boolean.FALSE, null, null, null);
+//	}
 
 	/**
-	 * Returns current position latitude
+	 * Returns current position latitude - auto-detected
 	 * 
 	 * @return Current latitude
 	 */
-	private static String getLatitude() {
+	private static String getLatitudeDetected() {
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLatitude()) : null;
 	}
 
 	/**
-	 * Returns current position longitude
+	 * Returns current position longitude - auto-detected
 	 * 
 	 * @return Current longitude
 	 */
-	private static String getLongitude() {
+	private static String getLongitudeDetected() {
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLongitude()) : null;
 	}
 
 	/**
-	 * Returns current IP address
-	 * 
-	 * @return IP address
-	 */
-	private static String getIP() {
-		return NetworkAddressManager.getInstance().getIP();
-	}
-
-	/**
-	 * Returns BlackBerry User-Agent
+	 * Returns Composed BlackBerry User-Agent
 	 * 
 	 * @return User-Agent string
 	 */
-	private static String getUA() {
+	private static String getUADetected() {
 		StringBuffer result = new StringBuffer(150);
 		result.append("BlackBerry").append(DeviceInfo.getDeviceName()).append('/').append(DeviceInfo.getPlatformVersion());
 		result.append(" Profile/").append(System.getProperty("microedition.profiles"));
@@ -166,111 +166,38 @@ public class Adserver extends AdserverBase {
 	}
 
 	/**
-	 * Returns country from current locale
+	 * Returns country from current locale - auto-detected
 	 * 
 	 * @return Current country
 	 */
-	private static String getCountry() {
+	private static String getCountryDetected() {
 		return Locale.getDefault().getCountry();
 	}
 
 	/**
-	 * Returns current carrier name
+	 * Returns current carrier name - auto-detected
 	 * 
 	 * @return Current carrier name
 	 */
-	private static String getCarrier() {
+	private static String getCarrierDetected() {
 		return RadioInfo.getCurrentNetworkName();
 	}
 
-	public void setSite(String site) {
-		AdserverRequest.site = AdserverRequest.checkStringValue(site, null);
-	}
-	public void setZone(String zone) {
-		AdserverRequest.zone = AdserverRequest.checkStringValue(zone, null);;
-	}
-	public void setUa(String ua) {
-		AdserverRequest.ua = AdserverRequest.checkStringValue(ua, null);
-	}
-	public void setTest(String testMode) {
-		AdserverRequest.testMode = AdserverRequest.checkStringValue(testMode, null);
-	}
-	public void setPremium(Integer premium) {
-		AdserverRequest.premium = AdserverRequest.checkIntegerValue(premium, null);
-	}
-	public void setKeywords(String keywords) {
-		AdserverRequest.keywords = AdserverRequest.checkStringValue(keywords, null);
-	}
-	public void setMinSizeX(Integer minSizeX) {
-		AdserverRequest.minSizeX = AdserverRequest.checkIntegerValue(minSizeX, null);
-	}
-	public void setMinSizeY(Integer minSizeY) {
-		AdserverRequest.minSizeY = AdserverRequest.checkIntegerValue(minSizeY, null);
-	}
-	public void setMaxSizeX(Integer maxSizeX) {
-		AdserverRequest.maxSizeX = AdserverRequest.checkIntegerValue(maxSizeX, null);
-	}
-	public void setMaxSizeY(Integer maxSizeY) {
-		AdserverRequest.maxSizeY = AdserverRequest.checkIntegerValue(maxSizeY, null);
-	}
-	public void setParamBG(String paramBG) {
-		AdserverRequest.paramBG = AdserverRequest.checkStringValue(paramBG, null);
-	}
-	public void setParamLINK(String paramLINK) {
-		AdserverRequest.paramLINK = AdserverRequest.checkStringValue(paramLINK, null);
-	}
-	public void setCustomParameters(String customParameters) {
-		AdserverRequest.customParameters = AdserverRequest.checkStringValue(customParameters, null);
-	}
-	public void setAdServerUrl(String adServerUrl) {
-		AdserverRequest.adServerUrl = AdserverRequest.checkStringValue(adServerUrl, null);
-	}
-	public void setLatitude(String latitude) {
-		AdserverRequest.latitude = AdserverRequest.checkStringValue(latitude, null);
-	}
-	public void setLongitude(String longitude) {
-		AdserverRequest.longitude = AdserverRequest.checkStringValue(longitude, null);
-	}
-	public void setCountry(String country) {
-		AdserverRequest.country = AdserverRequest.checkStringValue(country, null);
-	}
-	public void setRegion(String region) {
-		AdserverRequest.region = AdserverRequest.checkStringValue(region, null);
-	}
-	public void setCity(String city) {
-		AdserverRequest.city = AdserverRequest.checkStringValue(city, null);
-	}
-	public void setArea(String area) {
-		AdserverRequest.area = AdserverRequest.checkStringValue(area, null);
-	}
-	public void setMetro(String metro) {
-		AdserverRequest.metro = AdserverRequest.checkStringValue(metro, null);
-	}
-	public void setZip(String zip) {
-		AdserverRequest.zip = AdserverRequest.checkStringValue(zip, null);
-	}
-	public void setCarrier(String carrier) {
-		AdserverRequest.carrier = AdserverRequest.checkStringValue(carrier, null);
-	}
-	public void setUpdateTime(int reloadPeriod) {
-		this.adReloadPreiod = reloadPeriod;
-	}
+	/**
+	 * Immediately update banner contents.
+	 */
 	public void update() {
-		if (null != Adserver.pauseLock) {
-			synchronized (Adserver.pauseLock) {
-				Adserver.pauseLock.notify();
+		if (null != pauseLock) {
+			synchronized (pauseLock) {
+				pauseLock.notify();
 			}	
 		}
 	}
 
-	public void setInternalBrowser (boolean internalBrowser) {
-		this.adInternalBrowserEnabled = internalBrowser;
-	}
-	
-	public void setDefaultImage (String defaultImage) {
-		this.defaultImage = defaultImage;
-	}
- 
+	/**
+	 * Set form click listener.
+	 * @param listener
+	 */
 	public void setClickListener(AdClickListener listener) {
 		this.clickListener = listener;
 	}

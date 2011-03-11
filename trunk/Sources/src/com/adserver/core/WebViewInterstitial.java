@@ -33,7 +33,7 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 		closeButton = new ButtonField("Close", ButtonField.CONSUME_CLICK);
 		closeButton.setChangeListener(this);
 		this.clickListener = clickListener;
-		this.webView = WebView.getInstance();
+//		this.webView = WebView.getInstance();
 		
 
 		fullScreenManager = new Manager(USE_ALL_WIDTH | USE_ALL_HEIGHT) {
