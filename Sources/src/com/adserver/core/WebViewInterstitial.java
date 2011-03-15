@@ -5,6 +5,7 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.MenuItem;
+import net.rim.device.api.ui.Screen;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Menu;
@@ -16,7 +17,8 @@ import net.rim.device.api.ui.container.MainScreen;
 public class WebViewInterstitial extends MainScreen implements FieldChangeListener {
 
 	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR;
-
+	Adserver adserver;
+	AdserverInterstitial adserverInterstitial;
 	MainScreen thisScreen;
 	ButtonField closeButton;
 	boolean placeButon = false;
@@ -24,18 +26,16 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 	int closeButtonX, closeButtonY;
 	int webViewMarginX = 0;
 	int webViewMarginY = 0;
-	AdClickListener clickListener;
-	WebView webView;
+	boolean shiftLayout = false;
 
-	public WebViewInterstitial(final int closeButtonPosition, final boolean shiftLayout, final int showCloseButtonTime, final int autoCloseInterstitialTime) {
+	public WebViewInterstitial(final Adserver adserver, final AdserverInterstitial adserverInterstitial) {
 		super(STYLE);
 		thisScreen = this;
 		closeButton = new ButtonField("Close", ButtonField.CONSUME_CLICK);
 		closeButton.setChangeListener(this);
-		this.clickListener = clickListener;
-//		this.webView = WebView.getInstance();
+		this.adserver = adserver;
+		this.adserverInterstitial = adserverInterstitial;
 		
-
 		fullScreenManager = new Manager(USE_ALL_WIDTH | USE_ALL_HEIGHT) {
 
 			protected void sublayout(int width, int height) {
@@ -43,8 +43,8 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 				int screenHeight = Display.getHeight();
 
 
-				setPositionChild(webView, 0, 0);
-				layoutChild(webView, screenWidth, screenHeight);
+				setPositionChild(adserver, 0, 0);
+				layoutChild(adserver, screenWidth, screenHeight);
 
 				// hide close button
 				setPositionChild(closeButton, -200, -200);
@@ -57,36 +57,36 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 				int resizedScreeenHeight = screenHeight - closeButtonHeight;
 
 				if (placeButon) {
-					switch (closeButtonPosition) {
+					switch (adserverInterstitial.getCloseButtonPosition()) {
 					case AdserverInterstitial.CLOSEBUTTONPOSITIONCENTER:
 						setPositionChild(closeButton, (screenWidth / 2) - (closeButtonWidth / 2), (screenHeight / 2) - (closeButtonHeight / 2));
 						break;
 					case AdserverInterstitial.CLOSEBUTTONPOSITIONTOP:
 						setPositionChild(closeButton, (screenWidth / 2) - (closeButtonWidth / 2), 0);
 						if (shiftLayout) {
-							webView.setSize(screenWidth, resizedScreeenHeight);
-							setPositionChild(webView, 0, closeButtonHeight);
+							adserver.setSize(screenWidth, resizedScreeenHeight);
+							setPositionChild(adserver, 0, closeButtonHeight);
 						}
 						break;
 					case AdserverInterstitial.CLOSEBUTTONPOSITIONBOTTOM:
 						setPositionChild(closeButton, (screenWidth / 2) - (closeButtonWidth / 2), screenHeight - closeButtonHeight);
 						if (shiftLayout) {
-							webView.setSize(screenWidth, resizedScreeenHeight);
-							setPositionChild(webView, 0, 0);
+							adserver.setSize(screenWidth, resizedScreeenHeight);
+							setPositionChild(adserver, 0, 0);
 						}
 						break;
 					case AdserverInterstitial.CLOSEBUTTONPOSITIONLEFT:
 						setPositionChild(closeButton, 0, (screenHeight / 2) - (closeButtonHeight / 2));
 						if (shiftLayout) {
-							webView.setSize(resizedScreenWidth, screenHeight);
-							setPositionChild(webView, closeButtonWidth, 0);
+							adserver.setSize(resizedScreenWidth, screenHeight);
+							setPositionChild(adserver, closeButtonWidth, 0);
 						}
 						break;
 					case AdserverInterstitial.CLOSEBUTTONPOSITIONRIGHT:
 						setPositionChild(closeButton, screenWidth - closeButtonWidth, (screenHeight / 2) - (closeButtonHeight / 2));
 						if (shiftLayout) {
-							webView.setSize(resizedScreenWidth, screenHeight);
-							setPositionChild(webView, 0, 0);
+							adserver.setSize(resizedScreenWidth, screenHeight);
+							setPositionChild(adserver, 0, 0);
 						}
 						break;
 					default:
@@ -97,14 +97,14 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 				setExtent(screenWidth, screenHeight);
 			}
 		};
-		fullScreenManager.add(webView);
+		fullScreenManager.add(adserver);
 		fullScreenManager.add(closeButton);
 		add(fullScreenManager);
 
 		new Thread() {
 			public void run() {
 				try {
-					Thread.sleep(showCloseButtonTime);
+					Thread.sleep(adserverInterstitial.getShowCloseButtonTime());
 					UiApplication.getUiApplication().invokeLater(new Runnable() {
 						public void run() {
 							placeButon = true;
@@ -115,11 +115,11 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 				}
 			}
 		}.start();
-		if (autoCloseInterstitialTime > 0) {
+		if (adserverInterstitial.getAutoCloseInterstitialTime() > 0) {
 			new Thread() {
 				public void run() {
 					try {
-						Thread.sleep(autoCloseInterstitialTime);
+						Thread.sleep(adserverInterstitial.getAutoCloseInterstitialTime());
 						UiApplication.getUiApplication().invokeLater(new Runnable() {
 							public void run() {
 								UiApplication.getUiApplication().popScreen(thisScreen);
@@ -158,5 +158,4 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
         } else
             return super.onMenu(instance);
     }
-	
 }
