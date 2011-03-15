@@ -136,7 +136,7 @@ public class Adserver extends AdserverBase {
 	 * 
 	 * @return Current latitude
 	 */
-	private static String getLatitudeDetected() {
+	protected static String getLatitudeDetected() {
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLatitude()) : null;
 	}
@@ -146,7 +146,7 @@ public class Adserver extends AdserverBase {
 	 * 
 	 * @return Current longitude
 	 */
-	private static String getLongitudeDetected() {
+	protected static String getLongitudeDetected() {
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLongitude()) : null;
 	}
@@ -156,7 +156,7 @@ public class Adserver extends AdserverBase {
 	 * 
 	 * @return User-Agent string
 	 */
-	private static String getUADetected() {
+	protected static String getUADetected() {
 		StringBuffer result = new StringBuffer(150);
 		result.append("BlackBerry").append(DeviceInfo.getDeviceName()).append('/').append(DeviceInfo.getPlatformVersion());
 		result.append(" Profile/").append(System.getProperty("microedition.profiles"));
@@ -170,7 +170,7 @@ public class Adserver extends AdserverBase {
 	 * 
 	 * @return Current country
 	 */
-	private static String getCountryDetected() {
+	protected static String getCountryDetected() {
 		return Locale.getDefault().getCountry();
 	}
 
@@ -179,7 +179,7 @@ public class Adserver extends AdserverBase {
 	 * 
 	 * @return Current carrier name
 	 */
-	private static String getCarrierDetected() {
+	protected static String getCarrierDetected() {
 		return RadioInfo.getCurrentNetworkName();
 	}
 
@@ -201,4 +201,10 @@ public class Adserver extends AdserverBase {
 	public void setClickListener(AdClickListener listener) {
 		this.clickListener = listener;
 	}
+
+//	protected void onUndisplay() {
+//		setUpdateTime(0);
+//		super.onUndisplay();
+//	}
+
 }

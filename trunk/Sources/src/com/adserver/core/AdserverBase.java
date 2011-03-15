@@ -647,8 +647,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 
 			synchronized (syncObject) {
 				if (currentThread == null) {
-					currentThread = new SecondaryResourceFetchThread(
-							application);
+					currentThread = new SecondaryResourceFetchThread(application);
 					currentThread.start();
 				} else {
 					if (!referrer.equals(currentThread.browserField)) {
@@ -846,26 +845,26 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	}
 	// /////////////////////////////////////////////////////////////////
 	// Getters - setters
-	/**
-	 * Optional.
-	 * Get URL of ad server.
-	 */
-	public String getAdServerUrl () {
-		if (null != request) {
-			return request.getAdServerUrl();
-		} else return null;
-	}
-
-	/**
-	 * Optional.
-	 * Overrides the URL of ad server.
-	 * @param adserverURL
-	 */
-	public void setAdServerUrl(String adServerUrl) {
-		if (null != request) {
-			request.setAdServerUrl(adServerUrl);
-		} 
-	}
+//	/**
+//	 * Optional.
+//	 * Get URL of ad server.
+//	 */
+//	public String getAdServerUrl () {
+//		if (null != request) {
+//			return request.getAdServerUrl();
+//		} else return null;
+//	}
+//
+//	/**
+//	 * Optional.
+//	 * Overrides the URL of ad server.
+//	 * @param adserverURL
+//	 */
+//	public void setAdServerUrl(String adServerUrl) {
+//		if (null != request) {
+//			request.setAdServerUrl(adServerUrl);
+//		} 
+//	}
 
 	/**
 	 * Required.
@@ -1117,9 +1116,9 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	 * Overrides the URL of ad server.
 	 * @param adserverURL
 	 */
-	public void setAdserverUrl(String adserverUrl) {
+	public void setAdServerUrl(String adServerUrl) {
 		if(request != null) {
-			request.setAdServerUrl(adserverUrl);
+			request.setAdServerUrl(adServerUrl);
 		}
 	}
 
@@ -1127,7 +1126,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	 * Optional.
 	 * Get URL of ad server.
 	 */
-	public String getAdserverUrl() {
+	public String getAdServerUrl() {
 		if(request != null) {
 			return request.getAdServerUrl();
 		} else {
@@ -1451,14 +1450,14 @@ public class AdserverBase extends WebView implements RenderingApplication {
 		System.out.println("Web View Added to screen");
 		PrimaryResourceFetchThread cacheThread;
 		cacheThread = new PrimaryResourceFetchThread(DEFAULT_HTML, null, thisPtr);
-//		cacheThread = new PrimaryResourceFetchThread(DEFAULT_HTML, null, this);
 		cacheThread.start();
 
 		super.onDisplay();
 	}
 	
-	protected void onExposed() {
-		super.onExposed();
+	protected void onUndisplay() {
+		setUpdateTime(0);
+		super.onUndisplay();
 	}
 
 
