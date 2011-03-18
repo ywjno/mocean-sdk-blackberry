@@ -116,8 +116,8 @@ public class Adserver extends AdserverBase {
 	 *            The id of the zone of publisher site (default: DEFAULT_ZONE).
 	 */
 
-	public Adserver (String site, String zone) {
-		super (3, site, zone, null,
+	public Adserver (int site, int zone) {
+		super (3, Integer.toString(site), Integer.toString(zone), null,
 			   getLatitudeDetected(), getLongitudeDetected(), getUADetected(),
 			   null, "0", getCountryDetected(), null,
 			   null, null, getCarrierDetected(), null, 
@@ -201,10 +201,4 @@ public class Adserver extends AdserverBase {
 	public void setClickListener(AdClickListener listener) {
 		this.clickListener = listener;
 	}
-
-//	protected void onUndisplay() {
-//		setUpdateTime(0);
-//		super.onUndisplay();
-//	}
-
 }

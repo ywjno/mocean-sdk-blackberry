@@ -1,7 +1,11 @@
 package com.adserver.core;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import net.rim.device.api.io.ByteArrayInputConnection;
+import net.rim.device.api.io.IOUtilities;
 
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
@@ -64,6 +68,10 @@ public class AdserverInputStream extends InputStream {
 	 * @throws IOException
 	 */
 	public AdserverInputStream(final InputStream is) throws IOException {
+//		byte[] data = IOUtilities.streamToBytes(is);
+//		System.out.println("!!!!Response data: " + new String(data));
+//		this.is = new ByteArrayInputStream(data);
+		
 		cacheMode = true;
 		this.is = is;
 	}

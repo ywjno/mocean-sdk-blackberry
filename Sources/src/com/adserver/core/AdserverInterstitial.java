@@ -28,7 +28,7 @@ public final class AdserverInterstitial {
 	 *            The id of the zone of publisher site (default: DEFAULT_ZONE).
 	 */
 
-	public AdserverInterstitial(String site, String zone) {
+	public AdserverInterstitial(int site, int zone) {
 		adserver = new Adserver (site, zone);
 //		UiApplication.getUiApplication().pushScreen(new WebViewInterstitial(adserver, this));
 		}
@@ -87,14 +87,14 @@ public final class AdserverInterstitial {
 	 * Required.
 	 * Set the id of the publisher site. 
 	 */
-	public void setSite(String site) {
+	public void setSite(int site) {
 		adserver.setSite(site);
 	}
 
 	/**
 	 * Get the id of the publisher site. 
 	 */
-	public String getSite() {
+	public int getSite() {
 		return adserver.getSite();
 	}
 	/**
@@ -102,7 +102,7 @@ public final class AdserverInterstitial {
 	 * Set the id of the zone of publisher site.
 	 * @param zone
 	 */
-	public void setZone(String zone) {
+	public void setZone(int zone) {
 		adserver.setZone(zone);
 	}
 	
@@ -110,7 +110,7 @@ public final class AdserverInterstitial {
 	 * Get the id of the zone of publisher site.
 	 * @param zone
 	 */
-	public String getZone() {
+	public int getZone() {
 		return adserver.getZone();
 	}
 	
