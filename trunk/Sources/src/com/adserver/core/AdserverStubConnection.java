@@ -105,10 +105,10 @@ public class AdserverStubConnection implements HttpConnection {
 			}
 		}
 
-		if (Adserver.DEFAULT_HTML.equalsIgnoreCase(url) || Adserver.DEFAULT_IMG.equalsIgnoreCase(url)
-				|| Adserver.DEFAULT_IMG_OS5.equalsIgnoreCase(url)) {
+//		if (Adserver.DEFAULT_HTML.equalsIgnoreCase(url) || Adserver.DEFAULT_IMG.equalsIgnoreCase(url)
+//				|| Adserver.DEFAULT_IMG_OS5.equalsIgnoreCase(url)) {
 			this.is = new AdserverInputStream(is);
-		}
+//		}
 
 		// TODO TEST Disabled cache mode
 		//        if (!cacheMode) {

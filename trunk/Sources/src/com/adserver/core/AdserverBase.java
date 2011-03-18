@@ -21,7 +21,6 @@ import net.rim.device.api.system.Application;
 import net.rim.device.api.system.Branding;
 import net.rim.device.api.system.DeviceInfo;
 import net.rim.device.api.system.Display;
-import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.Status;
 
 import com.adserver.utils.EventListener;
@@ -512,15 +511,17 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	/**
 	 * Loading error dispatcher
 	 */
-	private static class AdserverNoNetworkNotify implements Runnable {
+	public static class AdserverNoNetworkNotify implements Runnable {
 		private AdserverBase application;
+		private String error;
 
-		private AdserverNoNetworkNotify(AdserverBase application) {
+		public AdserverNoNetworkNotify(AdserverBase application, String error) {
 			this.application = application;
+			this.error = error;
 		}
 
 		public void run() {
-			application.onError("No network.");
+			application.onError(error);
 		}
 	}
 
@@ -692,6 +693,8 @@ public class AdserverBase extends WebView implements RenderingApplication {
 
 		private void onLoaded() {
 			System.out.println("Content URL : "  + browserContent.getURL());
+//			browserContent.getBrowserPageContext().get
+//			System.out.println("Browser content: " + browserContent)
 			AdserverLoadedNotify notify = new AdserverLoadedNotify(application, browserContent);
 			Application.getApplication().invokeLater(notify);
 		}
@@ -870,39 +873,31 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	 * Required.
 	 * Set the id of the publisher site. 
 	 */
-	public void setSite(String site) {
-		request.setSite(site);
+	public void setSite(int site) {
+		request.setSite(Integer.toString(site));
 	}
 
 	/**
 	 * Get the id of the publisher site. 
 	 */
-	public String getSite() {
-		if(request != null) {
-			return request.getSite();
-		} else {
-			return null;
-		}
+	public int getSite() {
+		return Integer.parseInt(request.getSite());
 	}
 	/**
 	 * Required.
 	 * Set the id of the zone of publisher site.
 	 * @param zone
 	 */
-	public void setZone(String zone) {
-		request.setZone(zone);
+	public void setZone(int zone) {
+		request.setZone(Integer.toString(zone));
 	}
 	
 	/**
 	 * Get the id of the zone of publisher site.
 	 * @param zone
 	 */
-	public String getZone() {
-		if(request != null) {
-			return request.getZone();
-		} else {
-			return null;
-		}
+	public int getZone() {
+		return Integer.parseInt(request.getZone());
 	}
 	
 	/**
@@ -1459,6 +1454,4 @@ public class AdserverBase extends WebView implements RenderingApplication {
 		setUpdateTime(0);
 		super.onUndisplay();
 	}
-
-
  }

@@ -8,7 +8,9 @@ import java.io.InputStream;
 import javax.microedition.io.HttpConnection;
 
 import net.rim.device.api.io.IOUtilities;
+import net.rim.device.api.system.Application;
 
+import com.adserver.core.AdserverBase.AdserverNoNetworkNotify;
 import com.adserver.net.HttpUtils;
 
 /**
@@ -38,6 +40,12 @@ public class AdserverConnection implements HttpConnection {
 	public InputStream openInputStream() throws java.io.IOException {
 		InputStream tmp = connection.openInputStream();
 		byte[] data = IOUtilities.streamToBytes(tmp);
+
+		//Fire error callback
+		if ((new String(data)).equals("<!-- invalid params -->")) {
+			AdserverNoNetworkNotify notify = new AdserverNoNetworkNotify(application, "invalid params");
+			Application.getApplication().invokeLater(notify);
+		}
 
 		// TODO TEST Disabled cache mode
 		// saveCache(data);
