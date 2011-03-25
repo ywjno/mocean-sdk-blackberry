@@ -1,14 +1,11 @@
 package com.adserver.core;
 
-import java.util.Hashtable;
-
 import javax.microedition.location.Coordinates;
 
 import net.rim.device.api.i18n.Locale;
 import net.rim.device.api.system.Branding;
 import net.rim.device.api.system.DeviceInfo;
 import net.rim.device.api.system.RadioInfo;
-import net.rim.device.api.ui.component.CheckboxField;
 
 import com.adserver.utils.LocationManager;
 
@@ -187,11 +184,9 @@ public class Adserver extends AdserverBase {
 	 * Immediately update banner contents.
 	 */
 	public void update() {
-		if (null != pauseLock) {
-			synchronized (pauseLock) {
-				pauseLock.notify();
-			}	
-		}
+		synchronized (runLock) {
+			runLock.notify();
+		}	
 	}
 
 	/**

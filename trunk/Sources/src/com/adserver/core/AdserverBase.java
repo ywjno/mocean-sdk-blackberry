@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.io.HttpConnection;
+import javax.microedition.location.Coordinates;
 
 import net.rim.blackberry.api.browser.Browser;
 import net.rim.device.api.browser.field.BrowserContent;
@@ -24,6 +25,7 @@ import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.component.Status;
 
 import com.adserver.utils.EventListener;
+import com.adserver.utils.LocationManager;
 
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All
@@ -55,7 +57,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 																									// image
 	public static final String DEFAULT_IMG_OS5 = "http://" + DEFAULT_HOST + "/defaultImage"; 		// Internal resource for drawing resource image
 
-	public static final int AD_RELOAD_PERIOD = 12000; 												// in milliseconds
+	public static final int AD_RELOAD_PERIOD = 120000; 												// in milliseconds
 
 	private final AdserverBase thisPtr = this;
 
@@ -89,8 +91,9 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	private String advertiserId; 
 	private String groupCode;
 	private AdserverRequest request = new AdserverRequest();
-	protected Object pauseLock = new Object();
-	private Object runLock = new Object();
+	protected Object runLock = new Object();
+	protected int runCount = 0;
+	private boolean userDefinedCoordinates = false;
 
 
 
@@ -305,6 +308,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 					.getBrowserContent(connection, this, e);
 			if (browserContent != null) {
 				this.browserContent = browserContent;
+				//Display page content
 				browserContent.finishLoading();
 			}
 		} catch (Exception ef) {
@@ -589,26 +593,36 @@ public class AdserverBase extends WebView implements RenderingApplication {
 		}
 
 		public void run() {
-			synchronized (runLock) {
-				if (adReloadPreiod == 0) {
-					try {
-						runLock.wait();
-					} catch (InterruptedException e) {
+				synchronized (runLock) {
+					if (runCount < 2) {
+						runCount++;
+					} else {
+						if (adReloadPreiod == 0) {
+							try {
+								runLock.wait();
+							} catch (InterruptedException e) {
+							}
+						} else {
+							try {
+								runLock.wait(adReloadPreiod);
+							} catch (InterruptedException ignored) {
+							}
+						}
 					}
 				}
-			}
-			synchronized (pauseLock) {
-				if (sleepEnabled) {
-					try {
-						pauseLock.wait(adReloadPreiod);
-					} catch (InterruptedException ignored) {
-					}
-				}
-			}
+
 			resourceThread = new SecondaryResourceFetchThread(application);
 			HttpConnection connection;
 			try {
 				if (null != request) {
+					//Addition : check GPS every time
+					if (!userDefinedCoordinates) {
+						Coordinates coordinates = LocationManager.getInstance().getCoordinates();
+						if (coordinates.getLatitude() != 0 || coordinates.getLongitude() != 0) {
+							request.setLatitude(Double.toString(coordinates.getLatitude()));
+							request.setLongitude(Double.toString(coordinates.getLongitude()));
+						}
+					}
 					this.url = request.createURL();
 					System.out.println("URL = " + this.url);
 				}
@@ -693,8 +707,6 @@ public class AdserverBase extends WebView implements RenderingApplication {
 
 		private void onLoaded() {
 			System.out.println("Content URL : "  + browserContent.getURL());
-//			browserContent.getBrowserPageContext().get
-//			System.out.println("Browser content: " + browserContent)
 			AdserverLoadedNotify notify = new AdserverLoadedNotify(application, browserContent);
 			Application.getApplication().invokeLater(notify);
 		}
@@ -1135,6 +1147,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	 * @param latitude
 	 */
 	public void setLatitude(String latitude) {
+		userDefinedCoordinates = true;
 		if((request != null) && (latitude != null)) {
 			request.setLatitude(latitude);
 		}
@@ -1164,6 +1177,7 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	 * @param longitude
 	 */
 	public void setLongitude(String longitude) {
+//		userDefinedCoordinates = true;
 		if((request != null) && (longitude != null)) {
 			request.setLongitude(longitude);
 		}

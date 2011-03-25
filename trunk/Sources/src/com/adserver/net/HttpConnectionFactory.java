@@ -293,9 +293,12 @@ class HttpConnectionFactory implements ConnectionIterator {
 		if (url == null) {
 			throw new IllegalArgumentException("Null URL passed in");
 		}
-		if (!url.toLowerCase().startsWith("http")) {
-			throw new IllegalArgumentException("URL not http or https");
-		}
+
+//Failed on Java Script check
+//		if ((!url.toLowerCase().startsWith("http"))) {
+//			System.out.println("IllegalArgumentException thrown on requested url = " + url);
+//			throw new IllegalArgumentException("URL not http or https");
+//		}
 
 		this.url = url;
 		this.extraParameters = extraParameters;
