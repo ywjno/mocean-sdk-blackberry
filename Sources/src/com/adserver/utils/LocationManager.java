@@ -69,4 +69,12 @@ public class LocationManager {
 		startLoading();
 		return coordinates;
 	}
+
+	public synchronized void stopLoading() {
+		try {
+			thread.interrupt();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
 }

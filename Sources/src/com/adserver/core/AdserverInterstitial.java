@@ -87,32 +87,32 @@ public final class AdserverInterstitial {
 	 * Required.
 	 * Set the id of the publisher site. 
 	 */
-	public void setSite(int site) {
-		adserver.setSite(site);
-	}
-
-	/**
-	 * Get the id of the publisher site. 
-	 */
-	public int getSite() {
-		return adserver.getSite();
-	}
-	/**
-	 * Required.
-	 * Set the id of the zone of publisher site.
-	 * @param zone
-	 */
-	public void setZone(int zone) {
-		adserver.setZone(zone);
-	}
-	
-	/**
-	 * Get the id of the zone of publisher site.
-	 * @param zone
-	 */
-	public int getZone() {
-		return adserver.getZone();
-	}
+//	public void setSite(int site) {
+//		adserver.setSite(site);
+//	}
+//
+//	/**
+//	 * Get the id of the publisher site. 
+//	 */
+//	public int getSite() {
+//		return adserver.getSite();
+//	}
+//	/**
+//	 * Required.
+//	 * Set the id of the zone of publisher site.
+//	 * @param zone
+//	 */
+//	public void setZone(int zone) {
+//		adserver.setZone(zone);
+//	}
+//	
+//	/**
+//	 * Get the id of the zone of publisher site.
+//	 * @param zone
+//	 */
+//	public int getZone() {
+//		return adserver.getZone();
+//	}
 	
 	/**
 	 * Optional.
