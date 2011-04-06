@@ -20,6 +20,8 @@ public class AdserverConnection implements HttpConnection {
 	private HttpConnection	connection;
 	private AdserverBase	application;
 	private String			originalUrl	= "";
+	private byte[] 			saveBuffer = null;
+	private boolean		reUse = false;
 
 	/**
 	 * Constructor
@@ -38,20 +40,18 @@ public class AdserverConnection implements HttpConnection {
 	}
 
 	public InputStream openInputStream() throws java.io.IOException {
-		InputStream tmp = connection.openInputStream();
-		byte[] data = IOUtilities.streamToBytes(tmp);
-
-		//Fire error callback
-		if ((new String(data)).equals("<!-- invalid params -->")) {
-			AdserverNoNetworkNotify notify = new AdserverNoNetworkNotify(application, "invalid params");
-			Application.getApplication().invokeLater(notify);
+		if (!reUse) {
+			InputStream tmp = connection.openInputStream();
+			byte[] data = IOUtilities.streamToBytes(tmp);
+			saveBuffer = data;
+			return new ByteArrayInputStream(data);
+		} else {
+			setReuse(false);
+			return new ByteArrayInputStream(saveBuffer);
 		}
-
-		// TODO TEST Disabled cache mode
-		// saveCache(data);
-
-		return new ByteArrayInputStream(data);
 	}
+
+
 
 	public DataInputStream openDataInputStream() throws java.io.IOException {
 		return connection.openDataInputStream();
@@ -253,4 +253,11 @@ public class AdserverConnection implements HttpConnection {
 	 * (IOException ignored) { } result.append("\r\n"); return
 	 * result.toString(); }
 	 */
+	public void setReuse(boolean reUse) {
+		this.reUse = reUse;
+	}
+	
+	public void setBufferContent(String data) {
+		this.saveBuffer = data.getBytes();
+	}
 }
