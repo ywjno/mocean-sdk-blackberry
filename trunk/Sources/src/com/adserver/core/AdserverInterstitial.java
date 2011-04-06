@@ -19,6 +19,8 @@ public final class AdserverInterstitial {
 	private int closeButtonPosition = 0;
 	private int showCloseButtonTime = 0;
 	private int autoCloseInterstitialTime = 0;
+	protected AdClickListener clickListener;
+
 	
 	Adserver adserver;
 	/**
@@ -87,32 +89,32 @@ public final class AdserverInterstitial {
 	 * Required.
 	 * Set the id of the publisher site. 
 	 */
-//	public void setSite(int site) {
-//		adserver.setSite(site);
-//	}
-//
-//	/**
-//	 * Get the id of the publisher site. 
-//	 */
-//	public int getSite() {
-//		return adserver.getSite();
-//	}
-//	/**
-//	 * Required.
-//	 * Set the id of the zone of publisher site.
-//	 * @param zone
-//	 */
-//	public void setZone(int zone) {
-//		adserver.setZone(zone);
-//	}
-//	
-//	/**
-//	 * Get the id of the zone of publisher site.
-//	 * @param zone
-//	 */
-//	public int getZone() {
-//		return adserver.getZone();
-//	}
+	public void setSite(int site) {
+		adserver.setSite(site);
+	}
+
+	/**
+	 * Get the id of the publisher site. 
+	 */
+	public int getSite() {
+		return adserver.getSite();
+	}
+	/**
+	 * Required.
+	 * Set the id of the zone of publisher site.
+	 * @param zone
+	 */
+	public void setZone(int zone) {
+		adserver.setZone(zone);
+	}
+	
+	/**
+	 * Get the id of the zone of publisher site.
+	 * @param zone
+	 */
+	public int getZone() {
+		return adserver.getZone();
+	}
 	
 	/**
 	 * Optional.
@@ -528,5 +530,25 @@ public final class AdserverInterstitial {
 	 */
 	public void setSize(int width, int height) {
 		adserver.setSize(width, height);
+		
 	}
+
+	/**
+	 * Set form click listener.
+	 * @param listener
+	 */
+	public void setClickListener(AdClickListener listener) {
+		adserver.clickListener = listener;
+	}
+	// from Observable.java class
+	// ////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Set form event listener.
+	 * @param listener
+	 */
+	public void addListener(EventListener listener) {
+		adserver.addListener(listener);
+	}
+
 }

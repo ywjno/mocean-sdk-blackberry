@@ -17,7 +17,7 @@ public class CacheManager {
     public static final String ADSERVER_ROOT = "Adserver/"; // Main workspace name
     public static final String ADSERVER_CACHE = "cache/";   // subdir for cache
     private static CacheManager instance;
-
+    private static String md5Hash = "";
     private String rootpath = "";   // Path to main workspace
 
 
@@ -218,14 +218,17 @@ public class CacheManager {
     }
 
     private static String byteArrayToHexString(byte[] array) {
-        int size = array.length;
-        StringBuffer hexString = new StringBuffer(size);
-        for (int i = 0; i < size; ++i) {
-            int intVal = array[i] & 0xff;
-            if (intVal < 0x10)
-                hexString.append('0');
-            hexString.append(Integer.toHexString(intVal));
-        }
-        return hexString.toString();
+        if (md5Hash.equals("")) {
+        	int size = array.length;
+            StringBuffer hexString = new StringBuffer(size);
+            for (int i = 0; i < size; ++i) {
+                int intVal = array[i] & 0xff;
+                if (intVal < 0x10)
+                    hexString.append('0');
+                hexString.append(Integer.toHexString(intVal));
+            }
+            md5Hash = hexString.toString();
+            return md5Hash;
+        } else return md5Hash;
     }
 }

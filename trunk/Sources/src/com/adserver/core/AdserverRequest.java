@@ -3,6 +3,8 @@ package com.adserver.core;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import net.rim.device.api.system.DeviceInfo;
+
 import com.adserver.utils.Constants;
 import com.adserver.utils.URLParamEncoder;
 
@@ -728,6 +730,9 @@ public class AdserverRequest {
 		encoder.addParam("count", Constants.COUNT.intValue());
 		//SDK vertion 
 		encoder.addParam("version", AdserverURL.getVersion());
+		//udid
+		//TODO: rework later
+		encoder.addParam("udid", CacheManager.getMD5Hash(Integer.toString(DeviceInfo.getDeviceId())));
 
 		return getAdServerUrl() + encoder.toString();
 	}

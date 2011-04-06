@@ -1,11 +1,7 @@
 package com.adserver.core;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import net.rim.device.api.io.ByteArrayInputConnection;
-import net.rim.device.api.io.IOUtilities;
 
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.

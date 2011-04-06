@@ -10,12 +10,17 @@ import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.container.FlowFieldManager;
+import net.rim.device.api.ui.container.VerticalFieldManager;
 
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
  */
 public class WebView extends FlowFieldManager {
-	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR;
+//public class WebView extends VerticalFieldManager {
+//	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL;
+	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR | Field.FIELD_HCENTER;
+//	private final static long STYLE = Field.FIELD_HCENTER;
+
 	private int width = Display.getWidth();
 	private int height = Display.getHeight();
 	private boolean sizeSet = false;
@@ -66,5 +71,4 @@ public class WebView extends FlowFieldManager {
 		sizeSet = true;
 		super.sublayout(width, height);
 	}
-	
 }

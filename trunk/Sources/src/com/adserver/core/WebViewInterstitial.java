@@ -16,7 +16,7 @@ import net.rim.device.api.ui.container.MainScreen;
  */
 public class WebViewInterstitial extends MainScreen implements FieldChangeListener {
 
-	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR;
+	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR | Field.FIELD_HCENTER;
 	Adserver adserver;
 	AdserverInterstitial adserverInterstitial;
 	MainScreen thisScreen;
@@ -27,7 +27,9 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 	int webViewMarginX = 0;
 	int webViewMarginY = 0;
 	boolean shiftLayout = false;
-
+	int marginX = 0;
+	int marginY = 0;
+	
 	public WebViewInterstitial(final Adserver adserver, final AdserverInterstitial adserverInterstitial) {
 		super(STYLE);
 		thisScreen = this;
@@ -35,6 +37,9 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 		closeButton.setChangeListener(this);
 		this.adserver = adserver;
 		this.adserverInterstitial = adserverInterstitial;
+
+//		marginX = Display.getWidth() - adserver.getWidth();
+//		if (marginX > 0) marginX = marginX /2;
 		
 		fullScreenManager = new Manager(USE_ALL_WIDTH | USE_ALL_HEIGHT) {
 
@@ -42,8 +47,11 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 				int screenWidth = Display.getWidth();
 				int screenHeight = Display.getHeight();
 
-
-				setPositionChild(adserver, 0, 0);
+				marginX = Display.getWidth() - adserver.getWidth();
+				if (marginX > 0) marginX = marginX /2;
+				
+				
+				setPositionChild(adserver, marginX, 0);
 				layoutChild(adserver, screenWidth, screenHeight);
 
 				// hide close button
@@ -122,7 +130,10 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 						Thread.sleep(adserverInterstitial.getAutoCloseInterstitialTime());
 						UiApplication.getUiApplication().invokeLater(new Runnable() {
 							public void run() {
-								UiApplication.getUiApplication().popScreen(thisScreen);
+								try {
+									UiApplication.getUiApplication().popScreen(thisScreen);
+								} catch (Exception e) {
+								}
 							};
 						});
 					} catch (InterruptedException ie) {
@@ -135,6 +146,7 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 	public void fieldChanged(Field field, int context) {
 		try {
 			UiApplication.getUiApplication().popScreen(this);
+			adserver.setUpdateTime(0);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}

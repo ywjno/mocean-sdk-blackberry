@@ -1,6 +1,7 @@
 package com.adserver.core;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -17,6 +18,7 @@ import net.rim.device.api.browser.field.RenderingOptions;
 import net.rim.device.api.browser.field.RenderingSession;
 import net.rim.device.api.browser.field.RequestedResource;
 import net.rim.device.api.browser.field.UrlRequestedEvent;
+import net.rim.device.api.io.IOUtilities;
 import net.rim.device.api.io.http.HttpHeaders;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.Branding;
@@ -94,7 +96,10 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	protected Object runLock = new Object();
 	protected int runCount = 0;
 	private boolean userDefinedCoordinates = false;
-
+	
+	private int width = 0;
+	private int height = 0;
+	
 
 
 	/**
@@ -302,6 +307,8 @@ public class AdserverBase extends WebView implements RenderingApplication {
 			}
 		}
 		this.connection = connection;
+//		System.out.println("Content type: " + connection.getType());
+//		setParseRequired(true);
 
 		try {
 			final BrowserContent browserContent = renderingSession
@@ -480,7 +487,9 @@ public class AdserverBase extends WebView implements RenderingApplication {
 			// webView.setContent(content);
 			thisPtr.setContent(content);
 			// System.out.println("Load notify!");
-			application.onLoaded();
+			if (runCount > 1) {
+				application.onLoaded();
+			}
 
 			// TODO TEST Disabled cache mode
 			// if (isLoaded) {
@@ -508,7 +517,9 @@ public class AdserverBase extends WebView implements RenderingApplication {
 		}
 
 		public void run() {
-			application.onStartLoading();
+			if (runCount > 1) {
+				application.onStartLoading();
+			}
 		}
 	}
 
@@ -597,22 +608,34 @@ public class AdserverBase extends WebView implements RenderingApplication {
 					if (runCount < 2) {
 						runCount++;
 					} else {
+//						if (adReloadPreiod == 0) {
+//							try {
+//								runLock.wait();
+//							} catch (InterruptedException e) {
+//							}
+//						} else {
+//							try {
+//								runLock.wait(adReloadPreiod);
+//							} catch (InterruptedException ignored) {
+//							}
+//						}
+						if (adReloadPreiod > 0 ) {
+							try {
+								runLock.wait(adReloadPreiod);
+							} catch (InterruptedException e) {
+							} 
+						}
 						if (adReloadPreiod == 0) {
 							try {
 								runLock.wait();
 							} catch (InterruptedException e) {
-							}
-						} else {
-							try {
-								runLock.wait(adReloadPreiod);
-							} catch (InterruptedException ignored) {
-							}
+							} 
 						}
 					}
 				}
 
 			resourceThread = new SecondaryResourceFetchThread(application);
-			HttpConnection connection;
+			HttpConnection connection = null;
 			try {
 				if (null != request) {
 					//Addition : check GPS every time
@@ -626,7 +649,55 @@ public class AdserverBase extends WebView implements RenderingApplication {
 					this.url = request.createURL();
 					System.out.println("URL = " + this.url);
 				}
+				
+
 				connection = makeConnection(url, requestHeaders, application);
+				if (connection instanceof AdserverConnection) {
+					((AdserverConnection) connection).setReuse(false);
+					//Parse connection result
+					InputStream inputStream = null;
+					byte[] data = null;
+					try {
+						if (connection.getResponseCode() == HttpConnection.HTTP_OK) {
+							inputStream = connection.openInputStream();
+							data = IOUtilities.streamToBytes(inputStream); 
+							System.out.println("Getted Data : " + new String (data));
+							 }
+					} catch (IOException error) {
+						System.out.println("Caught IOException: " + error.toString());
+					}
+					finally {
+						if (inputStream != null) {
+							try { 
+					            inputStream.close();
+					        }
+					        catch( Exception error){
+					        }
+						}
+					}
+					//data - contains server response
+					String dataResult = new String (data);
+					if((dataResult != null) && (dataResult.length() > 0)) {
+						String externalCampaignData = scrape(dataResult, "<external_campaign", "</external_campaign>");
+						//Check for error callback
+						if (dataResult.startsWith("<!-- invalid params -->")) {
+							AdserverNoNetworkNotify notify = new AdserverNoNetworkNotify(application, "invalid params");
+							Application.getApplication().invokeLater(notify);
+//						Check for external campaign
+						} else if (externalCampaignData.length() > 0){
+							String type = scrape(externalCampaignData, "<type>", "</type>");
+							String campaignId = scrape(externalCampaignData, "<campaign_id>", "</campaign_id>");
+							String trackUrl = scrape(externalCampaignData, "<track_url>", "</track_url>");
+							String externalParams = scrape(externalCampaignData, "<external_params>", "</external_params>");
+						} else {
+//							Add additional tags.
+							dataResult = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\">" + dataResult + "</body></html>";
+							((AdserverConnection) connection).setBufferContent(dataResult);
+						}
+					}
+					((AdserverConnection) connection).setReuse(true);
+				}
+	
 				application.processConnection(connection, null);
 			} catch (Exception e) {
 				resourceThread.onError();
@@ -706,15 +777,14 @@ public class AdserverBase extends WebView implements RenderingApplication {
 		}
 
 		private void onLoaded() {
-			System.out.println("Content URL : "  + browserContent.getURL());
-			AdserverLoadedNotify notify = new AdserverLoadedNotify(application, browserContent);
-			Application.getApplication().invokeLater(notify);
+				System.out.println("Content URL : "  + browserContent.getURL());
+				AdserverLoadedNotify notify = new AdserverLoadedNotify(application, browserContent);
+					Application.getApplication().invokeLater(notify);
 		}
 
 		private void onLoadingStart() {
-			AdserverStartLoadingNotify notify = new AdserverStartLoadingNotify(application, url);
-			Application.getApplication().invokeLater(notify);
-
+				AdserverStartLoadingNotify notify = new AdserverStartLoadingNotify(application, url);
+					Application.getApplication().invokeLater(notify);
 		}
 
 		public void run() {
@@ -1466,6 +1536,18 @@ public class AdserverBase extends WebView implements RenderingApplication {
 	
 	protected void onUndisplay() {
 		setUpdateTime(0);
+//		runLock.notify();
 		super.onUndisplay();
 	}
+
+	//scrape utility class
+	public String scrape(String resp, String start, String stop) {
+		int offset, len;
+		if((offset = resp.indexOf(start)) < 0)
+			return "";
+		if((len = resp.indexOf(stop, offset + start.length())) < 0)
+			return "";
+		return resp.substring(offset + start.length(), len);
+	}
+
  }
