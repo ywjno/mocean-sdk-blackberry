@@ -11,7 +11,7 @@ import javax.microedition.location.LocationProvider;
  */
 public class LocationManager {
 
-	public static final int			GPS_LOCATION_TIMEOUT	= 60;
+    public static final int GPS_LOCATION_TIMEOUT = 180;
 
 	private Thread					thread					= null;
 	private Coordinates				coordinates				= null;
@@ -21,6 +21,7 @@ public class LocationManager {
 	 * Constructor
 	 */
 	private LocationManager() {
+		startLoading();
 	}
 
 	public synchronized static LocationManager getInstance() {
@@ -34,39 +35,45 @@ public class LocationManager {
 		if (null == thread || !thread.isAlive()) {
 			thread = new Thread() {
 				public void run() {
-					loadCoordinates();
+					coordinates = getGpsLocation();
 				}
 			};
-//			thread.setPriority(Thread.MIN_PRIORITY);
 			thread.start();
 		}
 	}
 
-	private synchronized void loadCoordinates() {
-		try {
-			LocationProvider lp = LocationProvider.getInstance(getCriteria());
-			if (null != lp) {
-				Location loc = lp.getLocation(GPS_LOCATION_TIMEOUT);
-				setCoordinates(loc.getQualifiedCoordinates());
-			}
-		} catch (Exception ignored) {
-		}
-	}
 
-	private synchronized Criteria getCriteria() {
-		Criteria result = new Criteria();
-		result.setHorizontalAccuracy(500);
-		result.setVerticalAccuracy(500);
-		result.setPreferredResponseTime(GPS_LOCATION_TIMEOUT * 1000);
-		return result;
-	}
+	public static Coordinates getGpsLocation() {
+        Location loc;
+        Coordinates coords;
+        LocationProvider lp;
+        Criteria cr = new Criteria();
+        cr.setHorizontalAccuracy(2000);
+        cr.setVerticalAccuracy(2000);
+        cr.setPreferredResponseTime(60000);
 
-	private synchronized void setCoordinates(final Coordinates coordinates) {
-		this.coordinates = coordinates;
-	}
+        try {
+            lp = LocationProvider.getInstance(cr);
+
+            if (null == lp) {
+                return null;
+            } else {
+                loc = lp.getLocation(GPS_LOCATION_TIMEOUT);
+                coords = loc.getQualifiedCoordinates();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return coords;
+    }
+
+
+//	private synchronized void setCoordinates(final Coordinates coordinates) {
+//		this.coordinates = coordinates;
+//	}
 
 	public synchronized Coordinates getCoordinates() {
-		startLoading();
+//		startLoading();
 		return coordinates;
 	}
 
@@ -74,7 +81,6 @@ public class LocationManager {
 		try {
 			thread.interrupt();
 		} catch (Exception e) {
-			// TODO: handle exception
 		}
 	}
 }

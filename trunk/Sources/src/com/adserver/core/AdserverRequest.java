@@ -59,24 +59,6 @@ public class AdserverRequest {
 		setZone(zone);
 	}
 
-//	/**
-//	 * Get URL of ad server.
-//	 * @return
-//	 */
-//	public synchronized String getAdserverURL() {
-//		return adserverURL;
-//	}
-//
-//	/**
-//	 * Overrides the URL of ad server.
-//	 * @param adserverURL
-//	 */
-//	public synchronized void setAdserverURL(String adserverURL) {
-//		if((adserverURL != null) && (adserverURL.length() > 0)) {
-//			this.adserverURL = adserverURL;
-//		}
-//	}
-
 	/**
 	 * Required.
 	 * Set the id of the publisher site. 
@@ -741,9 +723,6 @@ public class AdserverRequest {
 				if (null != value) encoder.addParam(key, value);
 			}
 		}
-		//Pre-defined
-//		encoder.addParam("key", Constants.KEY.intValue());
-//		encoder.addParam("adstype", Constants.ADS_TYPE.intValue());
 		encoder.addParam("count", Constants.COUNT.intValue());
 		//SDK vertion 
 		encoder.addParam("version", AdserverURL.getVersion());

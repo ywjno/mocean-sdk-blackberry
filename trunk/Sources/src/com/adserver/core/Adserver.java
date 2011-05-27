@@ -93,7 +93,7 @@ public class Adserver extends AdserverBase {
 			String hashId, String defaultImage, Boolean internalBrowser,
 			AdClickListener clickListener, Integer updateTime, String customParameters) {
 		super(mode, site, zone, keywords,
-				null == latitude ? AutoDetectParameters.getInstance().getLatitude() : latitude, null == longitude ? AutoDetectParameters.getInstance().getLongitude() : longitude, getUADetected(),
+				null == latitude ? AutoDetectParameters.getInstance().getLatitude() : latitude, null == longitude ? AutoDetectParameters.getInstance().getLongitude() : longitude, null,
 				premium, test == Boolean.TRUE ? "1" : "0", null == country ? AutoDetectParameters.getInstance().getCountry() : country, region,
 				backgroundColor, textColor, carrier, url, hashId,
 				defaultImage, internalBrowser, clickListener, updateTime, customParameters);
@@ -108,21 +108,10 @@ public class Adserver extends AdserverBase {
 
 	public Adserver (int site, int zone) {
 		super (3, Integer.toString(site), Integer.toString(zone), null,
-				null, null, getUADetected(),
+				null, null, null,
 			   new Integer(2), "0", null, null,
 			   null, null, null, null, 
 			   "test", "defaultImage", Boolean.FALSE, 
 			   null, null, null);
 		}
-
-
-
-
-//	/**
-//	 * Set form click listener.
-//	 * @param listener
-//	 */
-//	public void setClickListener(AdClickListener listener) {
-//		this.clickListener = listener;
-//	}
 }

@@ -16,5 +16,7 @@ public interface CacheManager {
     public boolean hasCacheExpired(String url);
     public InputConnection getCache(String url);
     public InputConnection createCache(String url, HttpConnection response);
-    public void clearCache(String url);    
+    public String createCacheWithoutMetadata(String url, HttpConnection response);
+    public void clearCache(String url);
+	public String getCachepath();    
 }

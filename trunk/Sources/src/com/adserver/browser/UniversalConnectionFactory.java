@@ -28,7 +28,6 @@ public class UniversalConnectionFactory extends ConnectionFactory {
 		setAttemptsLimit(10);
 
 		//Sets connectionTimeout to the desired value (ms):
-//		setConnectionTimeout(30000);
 		setConnectionTimeout(10000);
 
 		//Sets the maximum time (ms) the factory will try to 

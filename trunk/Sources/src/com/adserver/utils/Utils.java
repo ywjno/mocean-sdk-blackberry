@@ -1,17 +1,17 @@
 package com.adserver.utils;
 
 import net.rim.device.api.crypto.MD5Digest;
-import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.UiApplication;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Hashtable;
-import java.util.Vector;
 
 public class Utils {
 
 	public static String getMD5Hash(String hash) {
 		return getMD5Hash(hash, 1);
 	}
+	
+	
 
 	public static String getMD5Hash(String hash, int count) {
 		String hashTmp = hash;
@@ -41,6 +41,7 @@ public class Utils {
 	
 	//scrape utility class
 	public static String scrape(String resp, String start, String stop) {
+		if (null == resp ) return null;
 		int offset, len;
 		if((offset = resp.indexOf(start)) < 0)
 			return "";
@@ -48,4 +49,28 @@ public class Utils {
 			return "";
 		return resp.substring(offset + start.length(), len);
 	}
+	
+	public static String replaceAll(String source, String pattern, String replacement) {
+        if (source == null) {
+            return "";
+        }
+       
+        StringBuffer sb = new StringBuffer();
+        int idx = -1;
+        int patIdx = 0;
+
+        while ((idx = source.indexOf(pattern, patIdx)) != -1) {
+            sb.append(source.substring(patIdx, idx));
+            sb.append(replacement);
+            patIdx = idx + pattern.length();
+        }
+        sb.append(source.substring(patIdx));
+        return sb.toString();
+
+    }
+	
+	public static void isEDT() {
+		System.out.println("EDT: " +UiApplication.isEventDispatchThread());
+	}
+
 }

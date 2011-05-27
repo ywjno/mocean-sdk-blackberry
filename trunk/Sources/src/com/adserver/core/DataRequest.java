@@ -5,7 +5,6 @@ import java.io.InputStream;
 import javax.microedition.io.HttpConnection;
 
 import com.adserver.browser.UniversalConnectionFactory;
-import com.adserver.utils.Logger;
 
 import net.rim.device.api.io.IOUtilities;
 import net.rim.device.api.io.transport.ConnectionDescriptor;
@@ -77,7 +76,7 @@ public class DataRequest {
             	data = IOUtilities.streamToBytes(is);
             }
 	    } catch (Exception e) {
-			Logger.debug(e.getMessage());
+//			Logger.debug(e.getMessage());
 			throw new IOException(e.toString());
 		} finally {
             // Close InputStream
@@ -143,7 +142,7 @@ public class DataRequest {
 	}
 
 	
-    private static HttpConnection openHttpConnection(String url) throws IOException {
+    public static HttpConnection openHttpConnection(String url) throws IOException {
     	HttpConnection httpConnection = null;
     	UniversalConnectionFactory connectionFactory = new UniversalConnectionFactory();
     	ConnectionDescriptor connectionDescriptor = connectionFactory.getConnection(url);
