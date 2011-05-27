@@ -5,8 +5,6 @@ import java.io.IOException;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
 
-//import com.adserver.net.HttpUtils;
-import com.adserver.utils.Logger;
 import com.adserver.utils.URLParamEncoder;
 import com.adserver.utils.Utils;
 
@@ -23,19 +21,21 @@ public class FirstStart extends Thread {
 
 	String advertiserId = "";
 	String groupCode = "";
+	AdserverBase adserver = null;
 
-	public FirstStart(String advertiserId, String groupCode) {
+	public FirstStart(String advertiserId, String groupCode, AdserverBase adserver) {
 		super();
 
 		this.advertiserId = advertiserId;
 		this.groupCode = groupCode;
+		this.adserver = adserver;
 
 		setPriority(Thread.MIN_PRIORITY);
 		if (!checkFirstStart()) {
-			Logger.debug(" >>>>>>>>> Install notification : Preping to mark phone");
+			adserver.getLogger().info(" >>>>>>>>> Install notification : Preping to mark phone");
 			start();
 		} else {
-			Logger.debug(" >>>>>>>>> Install notification : Allready marked");
+			adserver.getLogger().info(" >>>>>>>>> Install notification : Allready marked");
 		}
 	}
 
@@ -65,21 +65,10 @@ public class FirstStart extends Thread {
 		
 		System.out.println("Install notification result " + new String(result));
 		if ((null != result) && (Utils.scrape(new String(result), "<result>", "</result>")).equals("OK")) {
-			Logger.debug(" >>>>>>>>>> Install notification response : OK");
+			adserver.getLogger().info(" >>>>>>>>>> Install notification response : OK");
 //		if (null != result && result.length > 0 && '0' == (char) result[0]) {
 			markFirstStart();
-		} else Logger.debug(" >>>>>>>>>> Install notification response : failed");
-
-		/*
-		 * try { HttpConnection hc = null; try { hc = (HttpConnection)
-		 * Connector.open(URL + getQueryString(), Connector.READ_WRITE, true);
-		 * hc.setRequestMethod(HttpConnection.GET); if (hc.getResponseCode() ==
-		 * HttpConnection.HTTP_OK) { InputStream is = null; try { is =
-		 * hc.openInputStream(); int resultCode = is.read(); if ('0' == (char)
-		 * resultCode) { markFirstStart(); } } finally { if (null != is) {
-		 * is.close(); } } } } finally { if (null != hc) { hc.close(); } } }
-		 * catch (IOException ignored) { }
-		 */
+		} else adserver.getLogger().info(" >>>>>>>>>> Install notification response : failed");
 	}
 
 	private String getQueryString() {

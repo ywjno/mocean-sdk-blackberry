@@ -4,6 +4,7 @@ import javax.microedition.io.HttpConnection;
 import javax.microedition.io.InputConnection;
 
 import com.adserver.core.AdClickListener;
+import com.adserver.core.AdserverBase;
 import com.adserver.core.DataRequest;
 
 import net.rim.blackberry.api.browser.Browser;
@@ -29,12 +30,15 @@ public class CacheProtocolController extends ProtocolController{
     
     // get url
     String trackUrl = null;
+    
+    private AdserverBase adserver;
 
-	public CacheProtocolController(BrowserField browserField, AdClickListener clickListener, String trackUrl) {
+	public CacheProtocolController(BrowserField browserField, AdClickListener clickListener, String trackUrl, AdserverBase adserver) {
 		super(browserField);
 		this.browserField = browserField;
 		this.clickListener = clickListener;
 		this.trackUrl = trackUrl;
+		this.adserver = adserver;
 	}
 	
 	private CacheManager getCacheManager() {
@@ -44,40 +48,46 @@ public class CacheProtocolController extends ProtocolController{
 		return cacheManager;
 	}
 	
+
 	/**
 	 * Handle navigation requests (e.g., link clicks)
 	 */
 	public void handleNavigationRequest(final BrowserFieldRequest request) throws Exception {
-		//Send GET request to track url
-		if (null != trackUrl) {
-			Thread send = new Thread() {
-				public void run() {
-					try {
-						DataRequest.getResponse(trackUrl);
-					} catch (Exception e) {
+		try {
+			//Send GET request to track url
+			if (null != trackUrl) {
+				Thread send = new Thread() {
+					public void run() {
+						try {
+							DataRequest.getResponse(trackUrl);
+						} catch (Exception e) {
+						}
 					}
-				}
-			};
-			send.run();
-			
-		}
-		if (null != clickListener) {
-			Application.getApplication().invokeLater(new Runnable() {
-				public void run() {
-					if (!clickListener.didAdClicked(request.getURL())) {
+				};
+				send.run();
+				
+			}
+			if (null != clickListener) {
+				Application.getApplication().invokeLater(new Runnable() {
+					public void run() {
+						if (!clickListener.didAdClicked(request.getURL())) {
+							final String url = request.getURL();
+							adserver.getLogger().info(" CacheProtocolController - Link clicked: "+ url);
+							Browser.getDefaultSession().displayPage(url);
+						}
+
+					}
+				});
+			} else {
+				Application.getApplication().invokeLater(new Runnable() {
+					public void run() {
 						final String url = request.getURL();
+						adserver.getLogger().info(" CacheProtocolController - Link clicked: "+ url);
 						Browser.getDefaultSession().displayPage(url);
 					}
-
-				}
-			});
-		} else {
-			Application.getApplication().invokeLater(new Runnable() {
-				public void run() {
-					final String url = request.getURL();
-					Browser.getDefaultSession().displayPage(url);
-				}
-			});
+				});
+			}
+		} catch (Exception e) {
 		}
 		
 //		InputConnection ic = handleResourceRequest(request);
@@ -88,8 +98,7 @@ public class CacheProtocolController extends ProtocolController{
 	 * Handle resource request (e.g., images, external css/javascript resources)
 	 */
 	public InputConnection handleResourceRequest(BrowserFieldRequest request) throws Exception {
-		System.out.println(">>>>>>>> Requester Url : " + request.getURL());
-		
+		adserver.getLogger().info(" CacheProtocolController - Resourse Url : " + request.getURL());
 		// if requested resource is cacheable (e.g., an "http" resource), use the cache
 		if (getCacheManager() != null && getCacheManager().isRequestCacheable(request)) {
 			InputConnection ic = null;
@@ -112,5 +121,4 @@ public class CacheProtocolController extends ProtocolController{
 		// if requested resource is not cacheable, load it as usual
 		return super.handleResourceRequest(request);
 	}
-
 }

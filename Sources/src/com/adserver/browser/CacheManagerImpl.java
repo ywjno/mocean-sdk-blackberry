@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Enumeration;
-//import java.util.Hashtable;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
@@ -21,6 +20,7 @@ import com.adserver.utils.Utils;
 
 import net.rim.device.api.browser.field2.BrowserFieldRequest;
 import net.rim.device.api.browser.field2.BrowserFieldResponse;
+import net.rim.device.api.io.IOUtilities;
 import net.rim.device.api.io.http.HttpHeaders;
 
 /**
@@ -30,16 +30,13 @@ import net.rim.device.api.io.http.HttpHeaders;
 public class CacheManagerImpl implements CacheManager {
 
     private static final int MAX_STANDARD_CACHE_AGE = 2592000;
-//	private Hashtable cacheTable;
     public static final String ADSERVER_ROOT = "Adserver/"; // Main workspace name
     public static final String ADSERVER_CACHE = "cache/";   // subdir for cache
-//    private static String md5Hash = "";
     private String rootpath = "";   // Path to main workspace
     private CacheItem lastSavedCacheItem = null;
 
 	
 	public CacheManagerImpl() {
-//		cacheTable = new Hashtable();
 //		Create cache directory
 		try {
             rootpath = findRootpath();
@@ -187,6 +184,8 @@ public class CacheManagerImpl implements CacheManager {
                     actual = is.read(data, bytesread, len - bytesread);
                     bytesread += actual;
                 }
+            } else {
+            	data = IOUtilities.streamToBytes(is);
             }       
         } catch (IOException ioe) {
             System.out.println("Exceprion : " + ioe.getMessage());
@@ -223,6 +222,81 @@ public class CacheManagerImpl implements CacheManager {
         
         return new BrowserFieldResponse(url, data, headers);
     }
+    
+    public String createCacheWithoutMetadata(String url, HttpConnection response) {
+        InputStream is = null;
+        FileConnection conn = null;
+        OutputStream os = null;
+        DataOutputStream dos = null;
+        int writeCount = 0;
+        String contentType;
+        
+        //create file
+        String md5HashFileName = Utils.getMD5Hash(url);
+        try {
+            //guess content type
+            contentType = response.getHeaderField("Content-Type");
+        	conn = (FileConnection) Connector.open(getCachepath() + md5HashFileName, Connector.READ_WRITE);
+            if (!conn.exists()) {
+                conn.create();
+            }
+            //open output stream
+            os = conn.openOutputStream();
+            //write content type
+            dos = new DataOutputStream(os);
+            dos.writeUTF(contentType);
+            dos.flush();
+        } catch (Exception e) {
+		}
+        
+        //read data
+        try {
+        	is = response.openInputStream();
+			byte[] buf = new byte[1024];
+			int len;
+			while ((len = is.read(buf)) > 0)
+			{
+				os.write(buf, 0, len);
+				writeCount++;
+			}
+        } catch (IOException ioe) {
+        	return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ioe) {
+                }
+            }
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (IOException ioe) {
+                }
+            } 
+            if (os != null) {
+            	try {
+					os.close();
+				} catch (IOException ioe) {
+				}
+            }
+            if (dos != null) {
+            	try {
+					dos.close();
+				} catch (IOException ioe) {
+				}
+            }
+            if (conn != null) {
+            	try {
+            		conn.close();
+            	} catch (IOException ioe) {
+				}
+            }
+        }
+        if (writeCount >0) return getCachepath() + Utils.getMD5Hash(url);
+        else return null;
+    }
+    
     
     private long calculateCacheExpires(HttpConnection response) {
         long date = 0;
@@ -376,20 +450,31 @@ public class CacheManagerImpl implements CacheManager {
      * @throws IOException
      */
     private static String findRootpath() throws IOException {
-        Enumeration drives = FileSystemRegistry.listRoots();
         String root = "";
+        String sdcard = "";
+        String store = "";
+
+        Enumeration drives = FileSystemRegistry.listRoots();
+        
+        while (drives.hasMoreElements()) {
+            root = (String) drives.nextElement();
+            if (root.equalsIgnoreCase("store/")) {
+                store = "store/home/user/";
+                break;
+            }
+        }
+        drives = FileSystemRegistry.listRoots();
         while (drives.hasMoreElements()) {
             root = (String) drives.nextElement();
             if (root.equalsIgnoreCase("SDCard/")) {
-                root = "SDCard/";
-                break;
-            } else if (root.equalsIgnoreCase("store/")) {
-                root = "store/home/user/";
+                sdcard = "SDCard/";
                 break;
             }
         }
 
-
+        if (sdcard.equals("")) root = store;
+        else root = sdcard;
+        
         root = "file:///" + root + ADSERVER_ROOT;
         createDirectory(root);
         createDirectory(root + ADSERVER_CACHE);
@@ -458,6 +543,8 @@ public class CacheManagerImpl implements CacheManager {
             }
         }
     }
+    
+    
     /**
      * Get item from cache
      *

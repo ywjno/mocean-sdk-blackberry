@@ -21,6 +21,9 @@ public class AutoDetectParameters {
 	private static String md5DeviceId = null;
 	private static String country = null;
 	private static String carrier = null;
+	private static String longitude = null;
+	private static String latitude = null;
+	
 	
 	private AutoDetectParameters() {
 			instance = this;
@@ -56,11 +59,26 @@ public class AutoDetectParameters {
 	}
 	
 	public String getLongitude() {
+		//V2
+//		Coordinates coords = LocationManagerV2.getInstance().getCoordinates();
+//		if ((null != coords) && (coords.getLongitude() != 0)) {
+//			longitude = String.valueOf(coords.getLongitude());
+//			return longitude;
+//		} else return null;
+		//V1
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLongitude()) : null;
 	}
 
 	public String getLatitude() {
+		//V2
+//		Coordinates coords = LocationManagerV2.getInstance().getCoordinates();
+//		if ((null != coords) && (coords.getLatitude() != 0)) {
+//			latitude = String.valueOf(coords.getLatitude());
+//			return latitude;
+//		} else return null;
+
+		//V1
 		Coordinates coords = LocationManager.getInstance().getCoordinates();
 		return null != coords ? String.valueOf(coords.getLatitude()) : null;
 	}

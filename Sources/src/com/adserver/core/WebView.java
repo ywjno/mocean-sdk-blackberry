@@ -1,22 +1,26 @@
 package com.adserver.core;
 
+import com.adserver.video.VideoField;
+
 import net.rim.device.api.browser.field2.BrowserField;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Manager;
-import net.rim.device.api.ui.container.FlowFieldManager;
+import net.rim.device.api.ui.container.VerticalFieldManager;
 
 /**
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
  */
-public class WebView extends FlowFieldManager {
+public class WebView extends VerticalFieldManager {
 	private final static long STYLE = Manager.HORIZONTAL_SCROLL | Manager.VERTICAL_SCROLL | Manager.HORIZONTAL_SCROLLBAR | Manager.VERTICAL_SCROLLBAR;
 
-	private int width = Display.getWidth();
-	private int height = Display.getHeight();
+	protected int width = Display.getWidth();
+	protected int height = Display.getHeight();
 	private boolean sizeSet = false;
 
 	public BrowserField browserField = null;
+	public VideoField videoField = null;
+
 	/**
 	 * Constructor
 	 */
@@ -26,9 +30,15 @@ public class WebView extends FlowFieldManager {
 
 	public void sublayout(int maxWidth, int maxHeight) {
 		try {
-			super.sublayout(maxWidth, maxHeight);
-			if (!sizeSet) setExtent(browserField.getExtent().width, browserField.getExtent().height);
-			else setExtent(width, height);
+//			super.sublayout(maxWidth, maxHeight);
+			if (!sizeSet) {
+				super.sublayout(maxWidth, maxHeight);
+				if (null != browserField) setExtent(browserField.getExtent().width, browserField.getExtent().height);
+			}
+			else {
+				super.sublayout(width, height);
+				setExtent(width, height);
+			}
 		} catch (Exception e) {
 		}
 	}
@@ -68,5 +78,17 @@ public class WebView extends FlowFieldManager {
 				}
 			});
 		}
+	}
+	public void displayVideoField(final String fileName,final int width,final int height, final AdClickListener clickListener, final String url, AdserverBase adserver) {
+		videoField = new VideoField(fileName, width, height, clickListener, url, adserver);
+		Application.getApplication().invokeAndWait(new Runnable() {
+			public void run() {
+				try {
+					deleteAll();
+				} catch (Exception e) {
+				}
+				add(videoField);
+			}
+		});
 	}
 }

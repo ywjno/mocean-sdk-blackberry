@@ -39,7 +39,9 @@ public final class AdserverInterstitial {
 	 * Push AdserverInterstitial to display stack. 
 	 */
 	public void pushScreen() {
-		UiApplication.getUiApplication().pushScreen(new WebViewInterstitial(adserver, this));
+		WebViewInterstitial webViewInterstitial = new WebViewInterstitial(adserver, this);
+		adserver.setWebViewInterstitial(webViewInterstitial);
+		UiApplication.getUiApplication().pushScreen(webViewInterstitial);
 	}
 
 	// /////////////////////////////////////////////////////////////////
@@ -122,7 +124,7 @@ public final class AdserverInterstitial {
 	 * the ad response is "Test MODE".
 	 * @param enabled
 	 */
-	public void setTest(Boolean enabled) {
+	public void setTest(boolean enabled) {
 		adserver.setTest(enabled);
 	}
 
@@ -130,7 +132,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get test mode setting.
 	 */
-	public Boolean getTest() {
+	public boolean getTest() {
 		return adserver.getTest();
 	}
 
@@ -141,7 +143,7 @@ public final class AdserverInterstitial {
 	 * Can be used only by premium publishers.
 	 * @param premium
 	 */
-	public void setPremium(Integer premium) {
+	public void setPremium(int premium) {
 		adserver.setPremium(premium);
 	}
 
@@ -149,7 +151,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get Filter by premium.
 	 */
-	public Integer getPremium() {
+	public int getPremium() {
 		return adserver.getPremium();
 	}
 	
@@ -175,7 +177,7 @@ public final class AdserverInterstitial {
 	 * Set minimum width of advertising. 
 	 * @param minSizeX
 	 */
-	public void setMinSizeX(Integer minSizeX) {
+	public void setMinSizeX(int minSizeX) {
 		adserver.setMinSizeX(minSizeX);
 	}
 	
@@ -183,7 +185,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get minimum width of advertising. 
 	 */
-	public Integer getMinSizeX() {
+	public int getMinSizeX() {
 		return adserver.getMinSizeX();
 	}
 	
@@ -192,7 +194,7 @@ public final class AdserverInterstitial {
 	 * Set minimum height of advertising. 
 	 * @param minSizeY
 	 */
-	public void setMinSizeY(Integer minSizeY) {
+	public void setMinSizeY(int minSizeY) {
 		adserver.setMinSizeY(minSizeY);
 	}
 	
@@ -200,7 +202,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get minimum height of advertising. 
 	 */
-	public Integer getMinSizeY() {
+	public int getMinSizeY() {
 		return adserver.getMinSizeY();
 	}
 	
@@ -209,7 +211,7 @@ public final class AdserverInterstitial {
 	 * Set maximum width of advertising. 
 	 * @param maxSizeX
 	 */
-	public void setMaxSizeX(Integer maxSizeX) {
+	public void setMaxSizeX(int maxSizeX) {
 		adserver.setMaxSizeX(maxSizeX);
 	}
 	
@@ -217,7 +219,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get maximum width of advertising. 
 	 */
-	public Integer getMaxSizeX() {
+	public int getMaxSizeX() {
 		return adserver.getMaxSizeX();
 	}
 	
@@ -226,7 +228,7 @@ public final class AdserverInterstitial {
 	 * Set maximum height of advertising. 
 	 * @param maxSizeY
 	 */
-	public void setMaxSizeY(Integer maxSizeY) {
+	public void setMaxSizeY(int maxSizeY) {
 		adserver.setMaxSizeY(maxSizeY);
 	}
 	
@@ -234,7 +236,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get maximum height of advertising. 
 	 */
-	public Integer getMaxSizeY() {
+	public int getMaxSizeY() {
 		return adserver.getMaxSizeY();
 	}
 	
@@ -537,7 +539,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Set Ads Type
 	 */
-	public void setAdsType(Integer adsType) {
+	public void setAdsType(int adsType) {
 		adserver.setAdsType(adsType);
 	}
 	
@@ -545,7 +547,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get type of ads.
 	 */
-	public Integer getAdsType() {
+	public int getAdsType() {
 		return adserver.getAdsType();
 	}
 	
@@ -553,7 +555,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Set output format. Normal format uses key = 1. Parameter key should be set to 3 in order to use XML output and to 5 in order to use JSON output.
 	 */
-	public void setKey(Integer key) {
+	public void setKey(int key) {
 		adserver.setKey(key);
 	}
 	
@@ -561,7 +563,7 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Get output format
 	 */
-	public Integer getKey() {
+	public int getKey() {
 		return adserver.getKey();
 	}
 	

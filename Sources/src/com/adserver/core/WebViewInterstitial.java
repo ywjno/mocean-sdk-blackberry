@@ -5,10 +5,8 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Keypad;
 import net.rim.device.api.ui.Manager;
-import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.ButtonField;
-import net.rim.device.api.ui.component.Menu;
 import net.rim.device.api.ui.container.MainScreen;
 
 /**
@@ -170,4 +168,15 @@ public class WebViewInterstitial extends MainScreen implements FieldChangeListen
 //        } else
 //            return super.onMenu(instance);
 //    }
+
+	public void onEmptyContent() {
+		UiApplication.getUiApplication().invokeLater(new Runnable() {
+			public void run() {
+				try {
+					UiApplication.getUiApplication().popScreen(thisScreen);
+				} catch (Exception e) {
+				}
+			};
+		});
+	}
 }

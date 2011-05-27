@@ -1,5 +1,6 @@
 package com.adserver.core;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
 
@@ -17,7 +18,9 @@ import net.rim.device.api.browser.field2.BrowserFieldResourceRequestHandler;
 import net.rim.device.api.browser.field2.BrowserFieldResponse;
 import net.rim.device.api.browser.field2.ProtocolController;
 import net.rim.device.api.system.Application;
-import net.rim.device.api.system.Display;
+import net.rim.device.api.system.DeviceInfo;
+
+import net.rim.device.api.ui.component.Dialog;
 
 
 
@@ -30,8 +33,6 @@ import com.adserver.browser.*;
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All
  * Rights Reserved.
  */
-// public class AdserverBase extends Observable implements RenderingApplication
-// {
 public class AdserverBase extends WebView {
 	public static final int MODE_COUNTER_ONLY = 1;
 	public static final int MODE_ADS_ONLY = 2;
@@ -51,23 +52,24 @@ public class AdserverBase extends WebView {
 
 	private String hashId = ""; 																	// Unique Adserver instance ID
 	public String defaultImage = DEFAULT_IMG; 															// Name of default resource image
-	private boolean cacheEnabled = false; 															// TODO TEST Disabled cache mode
+//	private boolean cacheEnabled = false; 															// TODO TEST Disabled cache mode
 
-	private String url; 																			// Main request URL
+//	private String url; 																			// Main request URL
 	
 //	private BrowserContent browserContent = null; 													// Browser instance
-	private boolean isLoaded = false;
+//	private boolean isLoaded = false;
 	protected boolean adInternalBrowserEnabled; 													// Open ad links in external or
 																									// internal browser (default:
 																									// DEFAULT_AD_BROWSER_MODE)
 	protected int adReloadPreiod = AD_RELOAD_PERIOD; 												// Ad reload timeout
-	protected int adReloadPeriodSave = adReloadPreiod;
+//	protected int adReloadPeriodSave = adReloadPreiod;
 	
 	private String advertiserId; 
 	private String groupCode;
-	private AdserverRequest request = new AdserverRequest();
-	protected Object waitTillPageLoad = new Object();
-	protected Object timerObject = new Object();
+	public AdserverRequest request = new AdserverRequest();
+//	protected Object waitTillPageLoad = new Object();
+//	protected Object timerObject = new Object();
+//	protected Object onVisibilityObject = new Object();
 	
 	protected int runCount = 0;
 	private boolean userDefinedCoordinates = false;
@@ -77,13 +79,36 @@ public class AdserverBase extends WebView {
 	protected AdClickListener clickListener;
 	protected EventListener eventListener;
 	
-	private boolean urgentUpdate = false;
-	private boolean defaultImageIsSet = false;
-	private boolean runWhileTrue = true;
+//	private boolean urgentUpdate = false;
+	public boolean defaultImageIsSet = false;
+//	private boolean runWhileTrue = true;
 	private String excampaigns = null;
+	CacheManager cacheManager;
+//	private boolean exitFlag = false;
+	AdserverState adserverState;
+	String trackUrl = null;
+	boolean isSimulator = false;
+	private WebViewInterstitial webViewInterstitial = null;
+	Thread resourceFetchThread = null;
 	
+	private Logger logger = null;
 
-
+	public Logger getLogger() {
+		if (null == logger) {
+			//Log started
+			int hashCode = thisPtr.getClass().hashCode();
+			hashId = Integer.toString(hashCode);
+			logger = new Logger(hashId);
+		}
+		return logger;
+	}
+	public void setLogLevel(int logLevel) {
+		getLogger().setLogLevel(logLevel);
+	}
+	
+	public void setLoggerId (String id) {
+		getLogger().setHashId(id);
+	}
 
 	/**
 	 * Constructor
@@ -147,11 +172,7 @@ public class AdserverBase extends WebView {
 			String defaultImage, Boolean adInternalBrowserEnabled,
 			AdClickListener clickListener, Integer adReloadPreiod,
 			String customParameters) {
-
-//		if (null == hashId || null == defaultImage) {
-//			throw new IllegalArgumentException();
-//		}
-
+		
 		this.adInternalBrowserEnabled = adInternalBrowserEnabled.booleanValue();
 		this.clickListener = clickListener;
 
@@ -162,20 +183,12 @@ public class AdserverBase extends WebView {
 			this.hashId = hashId;
 			this.defaultImage = defaultImage;
 
-			// TODO TEST Disabled cache mode
-			// try {
-			// createCacheWorkspace();
-			// } catch (IOException e) {
-			// cacheEnabled = false;
-			// }
-
 			request = new AdserverRequest();
 			request.setSite(site);
 			request.setZone(zone);
 			request.setKeywords(keywords);
 			request.setLatitude(latitude);
 			request.setLongitude(longitude);
-			request.setUa(ua);
 			request.setPremium(premium);
 			request.setTestModeEnabled(testMode.equals("1") ? Boolean.TRUE : Boolean.FALSE );
 			request.setCountry(country);
@@ -185,154 +198,33 @@ public class AdserverBase extends WebView {
 			request.setCarrier(carrier);
 			request.setAdsType(new Integer (3));
 			request.setKey(new Integer (1));
-			this.url = request.createURL();
-//			Logger.debug("Initial URL on AdserverRequest construction= " + url );
+
+			adserverState = new AdserverState(this);
 			
+			String userAgent = getUADetected();
+			request.setUa(userAgent);
+			
+			getLogger().debug("Adserver : Log started");
+			
+			//is simulator
+			isSimulator = DeviceInfo.isSimulator();
 	}
-
-//	/**
-//	 * Load main ads URL
-//	 */
-//	private void load() {
-//		cacheEnabled = false;
-//		PrimaryResourceFetchThread thread;
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.addProperty("User-Agent", getUserAgent());
-//		headers.addProperty("Accept-Charset",
-//				"ISO-8859-1,US-ASCII,UTF-8,UTF-16BE,Windows-1252");
-//		headers.addProperty(
-//				"Accept",
-//				"application/vnd.rim.html, text/html, application/xhtml+xml, application/vnd.wap.xhtml+xml, text/vnd.sun.j2me.app-descriptor, " +
-//				"image/vnd.rim.png, image/jpeg, application/x-vnd.rim.pme.b, application/vnd.rim.ucs, image/gif, text/plain, image/x-portable-anymap, " +
-//				"image/tiff, image/x-png, image/x-portable-pixmap, image/x-icon, image/vnd.wap.wbmp, image/jpeg2000, image/x-portable-bitmap, image/bmp, " +
-//				"image/x-bmp, image/x-windows-bmp, image/png, image/jp2, image/gif;anim=1, image/x-ico, image/x-portable-graymap, image/jpg, image/svg+xml, " +
-//				"application/msword, application/mspowerpoint, application/vnd.ms-powerpoint, application/x-excel, application/vnd.ms-excel, application/pdf, " +
-//				"application/vnd.wordperfect, application/wordperfect5.1, application/vnd.wap.wmlc;q=0.9, application/vnd.wap.wmlscriptc;q=0.7, " +
-//				"text/vnd.wap.wml;q=0.7, */*;q=0.5");
-//		headers.addProperty("Accept-Encoding", "gzip,deflate");
-//		headers.addProperty("Accept-Language", "en-us;q=0.7,en;q=0.3");
-//		// thread = new PrimaryResourceFetchThread(this.url, headers, this, true);
-//		thread = new PrimaryResourceFetchThread(this.url, headers, this, true, request);
-//		thread.start();
-//		isLoaded = true;
-//	}
-
-//	/**
-//	 * Creates a working area for the cache
-//	 * 
-//	 * @throws IOException
-//	 */
-//	// TODO TEST Disabled cache mode
-//	// private void createCacheWorkspace() throws IOException {
-//	// CacheManager.createDirectory(CacheManager.getInstance().getCachepath() +
-//	// hashId + '/');
-//	// index =
-//	// CacheManager.loadCacheIndex(CacheManager.getInstance().getCachepath() +
-//	// hashId + "/index");
-//	// }
-//
-//	/**
-//	 * Build browser, start loading page resources
-//	 * 
-//	 * @param connection
-//	 *            HTTP connection
-//	 * @param e
-//	 * @throws RenderingException
-//	 */
-//	protected void processConnection(HttpConnection connection, Event e)
-//			throws RenderingException {
-//		if (this.connection != null) {
-//			try {
-//				this.connection.close();
-//			} catch (IOException ignored) {
-//			}
-//		}
-//		this.connection = connection;
-////		System.out.println("Content type: " + connection.getType());
-////		setParseRequired(true);
-//
-//		try {
-//			final BrowserContent browserContent = renderingSession
-//					.getBrowserContent(connection, this, e);
-//			if (browserContent != null) {
-//				this.browserContent = browserContent;
-//				//Display page content
-//				browserContent.finishLoading();
-//			}
-//		} catch (Exception ef) {
-//			throw new RenderingException();
-//		} finally {
-//			// AdserverLoadedNotify notify = new AdserverLoadedNotify(this,
-//			// browserContent);
-//			// Application.getApplication().invokeLater(notify);
-//
-//			if (null != resourceThread) {
-//				resourceThread.doneAddingImages();
-//			}
-//		}
-//	}
-
-
-	/**
-	 * Reload page
-	 */
-	private void reload() {
-		// AdserverReloadNotify notify = new AdserverReloadNotify();
-		// synchronized (Application.getEventLock()) {
-		// notify.run();
-		// Application.getApplication().invokeLater(notify);
-		// }
-	}
-
-//	/**
-//	 * Build HTTP connection
-//	 * 
-//	 * @param url
-//	 * @param requestHeaders
-//	 * @param adserverPtr
-//	 * @return
-//	 * @throws IOException
-//	 */
-//	private HttpConnection makeConnection(String url,
-//			HttpHeaders requestHeaders, final AdserverBase adserverPtr)
-//			throws IOException {
-//		boolean isCached = Adserver.DEFAULT_HTML.equalsIgnoreCase(url)
-//				|| Adserver.DEFAULT_IMG.equalsIgnoreCase(url)
-//				|| Adserver.DEFAULT_IMG_OS5.equalsIgnoreCase(url);
-//		// boolean isCached = Adserver.DEFAULT_HTML.equalsIgnoreCase(url) ||
-//		// Adserver.DEFAULT_IMG.equalsIgnoreCase(url) ||
-//		// Adserver.DEFAULT_IMG_OS5.equalsIgnoreCase(url) || isCached(url);
-//
-//		// Cache disabled mode
-//		if (isCached) {
-//			// if (adserverPtr.isCacheEnabled() && isCached) {
-//			return new AdserverStubConnection(url, requestHeaders, adserverPtr);
-//		}
-//		return new AdserverConnection(url, adserverPtr);
-//	}
-
 
 	/**
 	 * Returns Composed BlackBerry User-Agent
 	 * 
 	 * @return User-Agent string
 	 */
-	protected static String getUADetected() {
-//		StringBuffer result = new StringBuffer(150);
-//		result.append("BlackBerry").append(DeviceInfo.getDeviceName()).append('/').append(DeviceInfo.getPlatformVersion());
-//		result.append(" Profile/").append(System.getProperty("microedition.profiles"));
-//		result.append(" Configuration/").append(System.getProperty("microedition.configuration"));
-//		result.append(" VendorID/").append(Branding.getVendorId());
-//		return result.toString();
-		return System.getProperty("browser.useragent");
+	protected String getUADetected() {
+		String userAgent ="";
+		try {
+			userAgent = System.getProperty("browser.useragent");
+			System.out.println("User Agent: " + userAgent);
+			getLogger().info(" Adserver - User Agent Detected : " + userAgent);
+		} catch (Exception e) {
+		}
+		return userAgent;
 	}
-
-	public boolean isCacheEnabled() {
-		return cacheEnabled;
-	}
-
-	// /////////////////////////////////////////////////////////////////
-	// Getters - setters
 
 	/**
 	 * Required.
@@ -371,20 +263,16 @@ public class AdserverBase extends WebView {
 	 * the ad response is "Test MODE".
 	 * @param enabled
 	 */
-	public void setTest(Boolean enabled) {
-		request.setTestModeEnabled(enabled);
+	public void setTest(boolean enabled) {
+		request.setTestModeEnabled(new Boolean(enabled));
 	}
 
 	/**
 	 * Optional.
 	 * Get test mode setting.
 	 */
-	public Boolean getTest() {
-		if(request != null) {
-			return request.getTestModeEnabled();
-		} else {
-			return null;
-		}
+	public boolean getTest() {
+		return (request.getTestModeEnabled()).booleanValue();
 	}
 
 	/**
@@ -394,20 +282,16 @@ public class AdserverBase extends WebView {
 	 * Can be used only by premium publishers.
 	 * @param premium
 	 */
-	public void setPremium(Integer premium) {
-			request.setPremium(premium);
+	public void setPremium(int premium) {
+			request.setPremium(new Integer(premium));
 	}
 
 	/**
 	 * Optional.
 	 * Get Filter by premium.
 	 */
-	public Integer getPremium() {
-		if(request != null) {
-			return request.getPremium();
-		} else {
-			return null;
-		}
+	public int getPremium() {
+		return (request.getPremium()).intValue();
 	}
 	
 	/**
@@ -438,9 +322,9 @@ public class AdserverBase extends WebView {
 	 * Set minimum width of advertising. 
 	 * @param minSizeX
 	 */
-	public void setMinSizeX(Integer minSizeX) {
+	public void setMinSizeX(int minSizeX) {
 		if(request != null) {
-			request.setMinSizeX(minSizeX);
+			request.setMinSizeX(new Integer(minSizeX));
 		}
 	}
 	
@@ -448,12 +332,8 @@ public class AdserverBase extends WebView {
 	 * Optional.
 	 * Get minimum width of advertising. 
 	 */
-	public Integer getMinSizeX() {
-		if(request != null) {
-			return request.getMinSizeX();
-		} else {
-			return null;
-		}
+	public int getMinSizeX() {
+		return (request.getMinSizeX()).intValue();
 	}
 	
 	/**
@@ -461,22 +341,16 @@ public class AdserverBase extends WebView {
 	 * Set minimum height of advertising. 
 	 * @param minSizeY
 	 */
-	public void setMinSizeY(Integer minSizeY) {
-		if(request != null) {
-			request.setMinSizeY(minSizeY);
-		}
+	public void setMinSizeY(int minSizeY) {
+			request.setMinSizeY(new Integer(minSizeY));
 	}
 	
 	/**
 	 * Optional.
 	 * Get minimum height of advertising. 
 	 */
-	public Integer getMinSizeY() {
-		if(request != null) {
-			return request.getMinSizeY();
-		} else {
-			return null;
-		}
+	public int getMinSizeY() {
+		return (request.getMinSizeY()).intValue();
 	}
 	
 	/**
@@ -484,22 +358,16 @@ public class AdserverBase extends WebView {
 	 * Set maximum width of advertising. 
 	 * @param maxSizeX
 	 */
-	public void setMaxSizeX(Integer maxSizeX) {
-		if(request != null) {
-			request.setSizeX(maxSizeX);
-		}
+	public void setMaxSizeX(int maxSizeX) {
+		request.setSizeX(new Integer(maxSizeX));
 	}
 	
 	/**
 	 * Optional.
 	 * Get maximum width of advertising. 
 	 */
-	public Integer getMaxSizeX() {
-		if(request != null) {
-			return request.getSizeX();
-		} else {
-			return null;
-		}
+	public int getMaxSizeX() {
+		return (request.getSizeX()).intValue();
 	}
 	
 	/**
@@ -507,22 +375,16 @@ public class AdserverBase extends WebView {
 	 * Set maximum height of advertising. 
 	 * @param maxSizeY
 	 */
-	public void setMaxSizeY(Integer maxSizeY) {
-		if(request != null) {
-			request.setSizeY(maxSizeY);
-		}
+	public void setMaxSizeY(int maxSizeY) {
+		request.setSizeY(new Integer(maxSizeY));
 	}
 	
 	/**
 	 * Optional.
 	 * Get maximum height of advertising. 
 	 */
-	public Integer getMaxSizeY() {
-		if(request != null) {
-			return request.getSizeY();
-		} else {
-			return null;
-		}
+	public int getMaxSizeY() {
+		return (request.getSizeY()).intValue();
 	}
 	
 	/**
@@ -845,22 +707,16 @@ public class AdserverBase extends WebView {
 	 * Set type of ads (1 - text only, 2 - image only, 3 - image and text, 6 - SMS ad). SMS will be ONLY returned in XML and should be used along with key=3. 
 	 * @param adsType
 	 */
-	public void setAdsType(Integer adsType) {
-		if(request != null) {
-			request.setAdsType(adsType);
-		}
+	public void setAdsType(int adsType) {
+		request.setAdsType(new Integer(adsType));
 	}
 	
 	/**
 	 * Optional.
 	 * Get Type of ads. 
 	 */
-	public Integer getAdsType() {
-		if(request != null) {
-			return request.getAdsType();
-		} else {
-			return null;
-		}
+	public int getAdsType() {
+		return (request.getAdsType()).intValue();
 	}
 
 	/**
@@ -868,22 +724,16 @@ public class AdserverBase extends WebView {
 	 * Set output format. Normal format uses key = 1. Parameter key should be set to 3 in order to use XML output and to 5 in order to use JSON output. 
 	 * @param adsType
 	 */
-	public void setKey(Integer key) {
-		if(request != null) {
-			request.setKey(key);
-		}
+	public void setKey(int key) {
+		request.setKey(new Integer(key));
 	}
 	
 	/**
 	 * Optional.
 	 * Get output format. 
 	 */
-	public Integer getKey() {
-		if(request != null) {
-			return request.getKey();
-		} else {
-			return null;
-		}
+	public int getKey() {
+		return (request.getKey()).intValue();
 	}
 
 
@@ -894,27 +744,11 @@ public class AdserverBase extends WebView {
 	public void setUpdateTime(int reloadPeriod) {
 
 		if (reloadPeriod > 0) {
-			//TODO check later
-//			synchronized (waitTillPageLoad) {
-//				waitTillPageLoad.notify();
-//			}
-			synchronized (timerObject) {
-				timerObject.notify();
-			}
-
+			adserverState.timerNotify();
 		}
 		this.adReloadPreiod = reloadPeriod * 1000;
-		this.adReloadPeriodSave = reloadPeriod * 1000;
+//		this.adReloadPeriodSave = reloadPeriod * 1000;
 	}
-	
-//	/**
-//	 * Set the flag which operates advertising opening.
-//	 * @param internalBrowser
-//	 */
-//	public void setInternalBrowser (boolean internalBrowser) {
-//		this.adInternalBrowserEnabled = internalBrowser;
-//	}
-	
 
 	public String getDefaultImage() {
 		return defaultImage;
@@ -943,7 +777,7 @@ public class AdserverBase extends WebView {
 	public void setAdvertiserId(String advertiserId) {
 		this.advertiserId = advertiserId;
 		if (null != advertiserId && null != groupCode) {
-			new FirstStart(advertiserId, groupCode);
+			new FirstStart(advertiserId, groupCode, thisPtr);
 		}
 	}
 
@@ -962,7 +796,7 @@ public class AdserverBase extends WebView {
 	public void setGroupCode(String groupCode) {
 		this.groupCode = groupCode;
 		if (null != advertiserId && null != groupCode) {
-			new FirstStart(advertiserId, groupCode);
+			new FirstStart(advertiserId, groupCode, thisPtr);
 		}
 	}
 	
@@ -993,7 +827,7 @@ public class AdserverBase extends WebView {
 		this.eventListener = eventListener;
 	}
 	
-	private String  addExcampaigns (String excampaignsAddition) {
+	String  addExcampaigns (String excampaignsAddition) {
 		if (null == excampaigns) excampaigns = excampaignsAddition;
 		else excampaigns = excampaigns + "," + excampaignsAddition;
 		return excampaigns;
@@ -1003,98 +837,50 @@ public class AdserverBase extends WebView {
 	 * Immediately update banner contents.
 	 */
 	public void update() {
-		urgentUpdate = true;
-		synchronized (timerObject) {
-			timerObject.notify();
-		}	
+		getLogger().info("Adserver : update()");
+		adserverState.setUpdate(true);
+		adserverState.timerNotify();
 	}
 
 	
 	protected void onDisplay() {
 		super.onDisplay();
-		Logger.debug(" >>>>>>>>>> Form - onDisplay() - Adserver added to screen");
 		
-		
-//		FirstStart firstStart  = new FirstStart("9417", "test");
-//		firstStart.start();
-
-		Thread refreshThread = new Thread() {
-
-			public void run() {
-				Logger.debug(" >>>>>>>>>> RefreshThread - started");
-//				new FirstStart(advertiserId, groupCode);
-
-				// check default image
-				if (defaultImageIsSet) {
-					displayDefaultImage();
-				}
-				// Loop while true
-				while(runWhileTrue) {
-					Logger.debug(" >>>>>>>>>> RefreshThread - begin new cycle");
-					Thread resourceThread = new ResourceFetchThread();
-					resourceThread.start();
-						
-					//waiting for resourceThread
-					synchronized (waitTillPageLoad) {
-						try {
-							waitTillPageLoad.wait();
-							Logger.debug(" >>>>>>>>>> RefreshThread - latch released");
-						} catch (InterruptedException e) {
-						} 
-					}
-					Logger.debug(" >>>>>>>>>> RefreshThread - cycle ended");
-				}
-				Logger.debug(" >>>>>>>>>> RefreshThread - finished");
-			};
-		};
-		refreshThread.start();
+		//is simulator
+		//TO DO - invoke when proper api will be available
+		//		if (isSimulator) invokeIsSimulator();
+		getLogger().info(" Adserver - onDisplay() - Adserver object added to screen");
+		adserverState.doIt();
 	}
 	
 	protected void onUndisplay() {
 		super.onUndisplay();
-		//do not start refresh again
-		Logger.debug(" >>>>>>>>>> Form - onUndisplay()");
-
-		runWhileTrue = false;
+		getLogger().info(" Adserver - onUndisplay() - Adserver object removed from screen");
+		//trying to terminate thread
+		if ((null != resourceFetchThread) && (resourceFetchThread.isAlive())) {
+			resourceFetchThread.interrupt();
+		}
 		// need to edit adReloadPeriod Check loop
 		adReloadPreiod = 1;
-		
-		synchronized (timerObject) {
-			try {
-				timerObject.notify();
-				timerObject.notify();
-			} catch (Exception e) {
-			}
-		}
+		adserverState.setAdserverAlive(false);
+		adserverState.timerNotify();
 	}
 	
 	protected void onVisibilityChange(boolean visible) {
 		super.onVisibilityChange(visible);
-		Logger.debug(" >>>>>>>>>> Form - onVisibilityChange() - visibility: " + visible);
+		getLogger().info(" Adserver - onVisibilityChange() - visibility: " + visible);
 		if (visible) {
-			adReloadPreiod = adReloadPeriodSave;
-			try {
-				//wake up latch
-				synchronized (timerObject) {
-					timerObject.notify();
-				}
-			}catch (Exception e) {
-			}
+			adserverState.setVisible(true);
 		}
 		else {
-			//if form is invisible - save reload period and set update time to 0
-			adReloadPeriodSave = adReloadPreiod;
-			adReloadPreiod = 0;
+			adserverState.setVisible(false);
 		}
-
-		
 	}
 	
-	private void displayDefaultImage() {
+	public void displayDefaultImage() {
+		getLogger().info(" Adserver - displayDefaultImage()");
 		browserField = new BrowserField();
 		BrowserFieldConfig config = browserField.getConfig();
-
-//		config.setProperty(BrowserFieldConfig.VIEWPORT_WIDTH, new Integer(Display.getWidth()));
 
 		ProtocolController controller = new ProtocolController(browserField);
 		UniversalConnectionFactory factory = new UniversalConnectionFactory();
@@ -1104,7 +890,7 @@ public class AdserverBase extends WebView {
 		
 		controller.setNavigationRequestHandler("http", new BrowserFieldNavigationRequestHandler() {
 			public void handleNavigation(BrowserFieldRequest request) throws Exception {
-				Logger.debug(" >>>>>>>>>> Default image clicked!");
+				getLogger().info(" Adserver - displayDefaultImage() - controller.setNavigationRequestHandler - Default image clicked!");
 			}
 		});
 		
@@ -1129,203 +915,267 @@ public class AdserverBase extends WebView {
 		Application.getApplication().invokeAndWait(new Runnable() {
 			public void run() {
 				add(browserField);
+				getLogger().info(" Adserver - default image added to screen");
 			}
 		});
 	}
 	
-	private class ResourceFetchThread extends Thread {
-		public void run() {
-			Logger.debug(" >>>>>>>>>> ResourceFetchThread - thread started");
-
-			String requestUrl = null;
-			String dataResult = null;
-			boolean errorFlag = false;
-			String trackUrl = null;
-			urgentUpdate = false;
-
-			if (null != eventListener) {
-				Application.getApplication().invokeAndWait(new Runnable() {
-					public void run() {
-						eventListener.onStartLoading();
-					}
-				});
-
-			}
-
-			// compose request url with current GPS coordinates
-			//Addition : check GPS every time
-			if (!userDefinedCoordinates) {
-				String latitude = AutoDetectParameters.getInstance().getLatitude();
-				String longitude= AutoDetectParameters.getInstance().getLongitude();
-				
-				if ((null != latitude) || (null != longitude)) {
-					request.setLatitude(latitude);
-					request.setLongitude(longitude);
-				}
-			}
-			requestUrl = request.createURL();
-			System.out.println("Requested URL = " + requestUrl);
-			
-			try {
-				dataResult = DataRequest.getResponse(requestUrl);
-			} catch (Exception e) {
-				//fire error callback - network error
-				Logger.debug("DataRequest Error: " + e.getMessage() );
-				if (null != eventListener) {
-					Application.getApplication().invokeAndWait(new Runnable() {
-						public void run() {
-							eventListener.onError("Network error");
-						}
-					});
-				}
-			}
-			
-			if((null != dataResult)) {
-				String externalCampaignData = Utils.scrape(dataResult, "<external_campaign", "</external_campaign>");
-				//Check for error - throw callback
-				if (dataResult.startsWith("<!-- invalid params -->")) {
-					if (null != eventListener) {
-						Application.getApplication().invokeAndWait(new Runnable() {
-							public void run() {
-								eventListener.onError("invalid params");
-							}
-						});
-					}
-					errorFlag = true;
-				}	
-
-				// Check for external campaign
-				if (externalCampaignData.length() > 0){
-					String type = Utils.scrape(externalCampaignData, "<type>", "</type>");
-					String campaignId = Utils.scrape(externalCampaignData, "<campaign_id>", "</campaign_id>");
-					trackUrl = Utils.scrape(externalCampaignData, "<track_url>", "</track_url>");
-					String externalParams = Utils.scrape(externalCampaignData, "<external_params>", "</external_params>");
-					//Parse external params
-					if (type.equals("Millennial")) {
-						String sdkapid = Utils.scrape(externalParams, "<param name=\"id\">", "</param>");
-						String adtype = Utils.scrape(externalParams, "<param name=\"adType\">", "</param>");
-						String zip = Utils.scrape(externalParams, "<param name=\"zip\">", "</param>");
-						String lon = Utils.scrape(externalParams, "<param name=\"long\">", "</param>");
-						String lat = Utils.scrape(externalParams, "<param name=\"lat\">", "</param>");
-						
-						String millenialRequestUrl = "http://ads.mp.mydas.mobi/getAd.php5?" + "sdkapid=" + sdkapid + "&auid=" + AutoDetectParameters.getInstance().getDeviceId() + "&adtype=" + adtype + "&zip=" + zip + "&long=" + lon + "&lat=" + lat;
-						
-						//get content second time
-						try {
-							dataResult = null;
-							dataResult = DataRequest.getResponse(millenialRequestUrl);
-						} catch (Exception e) {
-						}
-						if (null != dataResult) {
-							if (dataResult.length() < 1) {
-								//set error flag
-								errorFlag = true;
-								//set exCampaign
-								request.setExcampaigns(addExcampaigns(campaignId));
-							} 
-						} else errorFlag = true;
-					}
-				} else  {
-					//Plain HTML -  Add additional tags.
-					dataResult = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\"><table height=\"100%\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"text-align:center;vertical-align:middle;\">" + dataResult + "</td></tr></table></body></html>";
-				}
-					
-				//Pass content to browser
-				//if ok - start new browser instance
-				if (!errorFlag) {
-					browserField = new BrowserField();
-					BrowserFieldConfig config = browserField.getConfig();
-			        config.setProperty(BrowserFieldConfig.JAVASCRIPT_ENABLED, Boolean.TRUE );
-					config.setProperty(BrowserFieldConfig.ALLOW_CS_XHR, Boolean.TRUE);
-					UniversalConnectionFactory factory = new UniversalConnectionFactory();
-					config.setProperty(BrowserFieldConfig.CONNECTION_FACTORY, factory);
-					config.setProperty(BrowserFieldConfig.CONTROLLER, new CacheProtocolController(browserField, clickListener, trackUrl));
-					browserField.displayContent(dataResult, "");
-
-					browserField.addListener(new BrowserFieldListener() {
-						public void documentAborted(BrowserField browserField, Document document) throws Exception {
-							//  fire error callback
-							if (null != eventListener) {
-								Application.getApplication().invokeAndWait(new Runnable() {
-									public void run() {
-										eventListener.onError("Document loading abborted");
-									}
-								});
-							}
-							super.documentAborted(browserField, document);
-							releaseLatch();
-						}
-						
-						public void documentError(BrowserField browserField, Document document) throws Exception {
-							//  fire error callback
-							if (null != eventListener) {
-								Application.getApplication().invokeAndWait(new Runnable() {
-									public void run() {
-										eventListener.onError("Document loading error");
-									}
-								});
-							}
-							super.documentError(browserField, document);
-							releaseLatch();
-						}
-						
-						public void documentLoaded(BrowserField browserField, Document document) throws Exception {
-							//  fire onLoaded callback
-							if (null != eventListener) {
-								Application.getApplication().invokeAndWait(new Runnable() {
-									public void run() {
-										eventListener.onLoaded();
-									}
-								});
-							}
-							super.documentLoaded(browserField, document);
-							displayBrowserField();
-							
-							releaseLatch();
-						}
-					});
-				} else {
-					// release wait loop latch
-					releaseLatch();
-				}
-				
-			// DataResult = null -> wait and repeat
-			} else {
-				// release wait loop latch
-				releaseLatch();
-			}
-			Logger.debug(" >>>>>>>>>> ResourceFetchThread - thread finished");
-		}
+	public void fetchResource() {
 		
-		private void releaseLatch() {
-			Logger.debug(" >>>>>>>>>> ResourseThread - releaseLatch() - prepare to check adReloadPreiod");
-			if (!urgentUpdate) {
-				synchronized (timerObject) {
-					if (adReloadPreiod > 0 ) {
-						try {
-							Logger.debug(">>>>>>>>>> ResourseThread - releaseLatch() - waiting time in ms = " + adReloadPreiod);
-							timerObject.wait(adReloadPreiod);
-							Logger.debug(">>>>>>>>>> ResourseThread - releaseLatch() - waiting finished");
-						} catch (InterruptedException e) {
-						} 
-					}
-				
+//		Thread resourceFetchThread = new Thread(){
+		resourceFetchThread = new Thread(){
+			public void run() {
+
+				String requestUrl = null;
+				String dataResult = null;
+				trackUrl = null;
+				adserverState.setUpdate(false);
+				adserverState.setSkipBrowserPhase(false);
+
+				//fire event callback onStartLoading()
+				invokeOnStartLoadingCallback();
+
+				if (!userDefinedCoordinates) {
+					Thread getGpsCoordinater = new Thread() {
+						public void run() {
+							String latitude = AutoDetectParameters.getInstance().getLatitude();
+							String longitude= AutoDetectParameters.getInstance().getLongitude();
+
+							if ((null != latitude) || (null != longitude)) {
+								getLogger().info(" Adserver : coordinates detected: latitude: "+ latitude +", longitude : " + longitude);
+								request.setLatitude(latitude);
+								request.setLongitude(longitude);
+							}
+						}
+					};
+					getGpsCoordinater.start();
 				}
-				synchronized (timerObject) {
-					if (adReloadPreiod == 0) {
-						try {
-							Logger.debug(">>>>>>>>>> ResourseThread - releaseLatch() - waiting time in ms = " + adReloadPreiod);
-							timerObject.wait();
-							Logger.debug(">>>>>>>>>> ResourseThread - releaseLatch() - waiting finished");
-						} catch (InterruptedException e) {
-						} 
+
+				requestUrl = request.createURL();
+				getLogger().debug(" Adserver : requested URL :"+ requestUrl);
+				
+				//DEbug
+				/////////////////////////////////////////////////////////////////////////
+				try {
+					dataResult = DataRequest.getResponse(requestUrl);
+					getLogger().network(" Adserver - resourseThread response :"+ dataResult);
+				} catch (Exception e) {
+					//fire error callback - network error
+					getLogger().info(" Adserver - DataRequest Error: " + e.getMessage() );
+					invokeErrorCallback("network error");
+				}
+
+				//////////////////////////////////////////////////////////////////////////
+//				tEST DATA RESPONSES
+//				dataResult = "<a href=\"http://forum.yola.ru\"><video src=\"http://192.168.1.153/mocean/res/video/sw.mp4\" width=\"320\" height=\"240\"/></a><br/>";	
+//				dataResult = "<a href=\"http://rcrossia.ru/\"><video src=\"http://192.168.1.153/mocean/res/video/team.mov\" width=\"320\" height=\"240\"/></a><br/>";
+//				dataResult = "<a href=\"http://ads1.mocean.mobi/redir/ab091860-7aee-11e0-b3a8-001d096a03fe/0/14144\"><video src=\"http://mobile.mojiva.com/5_SILclip_iphone.mp4\"/></a><br/>";
+//				dataResult = "<table width=\"100%\"><tr><td><a href=\"mailto:ivan.efimenko@teamforce.org\">mailto1</a></td><td><ahref=\"mailto:foo@example.com?cc=bar@example.com&subject=Greetings%20from%20Cupertino!&body=Wish%20you%20were%20here!\">mailto2</a></td><td><ahref=\"tel:+79026707705\">tel</a></td><td><a href=\"sms:+79026707705\">sms</a></td></tr><tr><td><a href=\"http://maps.google.com/maps?q=cupertino\">map</a></td><td><a href=\"http://www.youtube.com/v/TWKnhu2qqOY\">youtube</a></td><td><a href=\"http://phobos.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=156093464&id=156093462&s=143441\">itunes</a></td></tr></table>";
+//				dataResult = "<a href=\"http://rcrossia.ru/\"><video src=\"http://192.168.1.153/mocean/res/video/sample.mov\" width=\"320\" height=\"240\"/></a><br/>";
+				//parse response
+				//error check
+				if((null != dataResult)) {
+					if ((dataResult.startsWith("<!-- invalid params -->")) || (dataResult.equals(""))) {
+						if ((dataResult.startsWith("<!-- invalid params -->"))) {
+							getLogger().debug(" Adserver - invalid params error");
+							invokeErrorCallback("invalid params");
+						}
+						if (null != webViewInterstitial) {
+							//empty content - close screen
+							webViewInterstitial.onEmptyContent();
+						}
+						adserverState.setSkipBrowserPhase(true);
 					}
+					////////////////////////////////////////////////////////////
+					String videoData = Utils.scrape(dataResult, "<video", "/>");
+					String externalCampaignData = Utils.scrape(dataResult, "<external_campaign", "</external_campaign>");
+
+					//response contains video data ?
+					if((videoData != null) && (videoData.length() > 0)) {
+						getLogger().info(" Adserver - video data detected");
+						parseVideoResponse(videoData, dataResult);
+						adserverState.setSkipBrowserPhase(true);
+					} 
+					// response contains Third party data ?
+					else if ((externalCampaignData != null) &&(externalCampaignData.length() > 0)){
+						getLogger().info(" Adserver - thisr party date detected");
+						dataResult = parseThirdPartyResponse(externalCampaignData, dataResult);
+					} 
+					//response - plain data
+					else {
+						//add table overlay
+						dataResult = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\"><table height=\"100%\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"text-align:center;vertical-align:middle;\">" + dataResult + "</td></tr></table></body></html>";
+					}
+
+					//Pass content to browser
+					if (!adserverState.isSkipBrowserPhase()) {
+						getLogger().debug(" Adserver - send display data to browser control");
+						displayBrowserField(dataResult, trackUrl);
+					} else {
+						// release wait loop latch
+						adserverState.releaseLatch();
+					}
+					////////////////////////////////////////////////////////////
+				} else {
+					adserverState.releaseLatch();
 				}
 			}
-			synchronized (waitTillPageLoad) {
-				Logger.debug(" >>>>>>>>>> ResourseThread - releaseLatch() - releasing latch");
-				waitTillPageLoad.notify();
+		};
+		
+		resourceFetchThread.start();
+	}
+
+	private void parseVideoResponse(String videoData, String dataResult) {
+		String videoUrl = Utils.scrape(videoData, "src=\"", "\"");
+		String clickUrl = Utils.scrape(dataResult, "href=\"", "\"");
+		
+		//check link validity
+		String urlLowercase = videoUrl.toLowerCase();
+		if (urlLowercase.startsWith("http")) {
+			//setup video playback
+			String videoFile = "";
+			if (cacheManager == null ) cacheManager = new CacheManagerImpl();
+			if (cacheManager.hasCache(videoUrl)) {
+				//get video fileName from cache
+				videoFile =  cacheManager.getCachepath() + Utils.getMD5Hash(videoUrl);
+			} else {
+				//write to cache
+				try {
+					HttpConnection videoConnection = DataRequest.openHttpConnection(videoUrl);
+					videoFile = cacheManager.createCacheWithoutMetadata(videoUrl, videoConnection);
+					try {
+						videoConnection.close();
+					} catch (Exception e) {
+					}
+				} catch (IOException e) {
+				}
+			}
+			if (videoFile.length() > 0) {
+				displayVideoField(videoFile, width, height, clickListener, clickUrl, thisPtr);
+			} else{
+				//Nothing to display
+				adserverState.setSkipBrowserPhase(true);
+			}
+		} else {
+			adserverState.setSkipBrowserPhase(true);
+		}
+	}
+	
+	private String parseThirdPartyResponse(String externalCampaignData, String dataResult) {
+		String result = null;
+		String type = Utils.scrape(externalCampaignData, "<type>", "</type>");
+		String campaignId = Utils.scrape(externalCampaignData, "<campaign_id>", "</campaign_id>");
+		trackUrl = Utils.scrape(externalCampaignData, "<track_url>", "</track_url>");
+		String externalParams = Utils.scrape(externalCampaignData, "<external_params>", "</external_params>");
+		//Parse external params
+		if (type.equals("Millennial")) {
+			String sdkapid = Utils.scrape(externalParams, "<param name=\"id\">", "</param>");
+			String adtype = Utils.scrape(externalParams, "<param name=\"adType\">", "</param>");
+			String zip = Utils.scrape(externalParams, "<param name=\"zip\">", "</param>");
+			String lon = Utils.scrape(externalParams, "<param name=\"long\">", "</param>");
+			String lat = Utils.scrape(externalParams, "<param name=\"lat\">", "</param>");
+
+			String millenialRequestUrl = "http://ads.mp.mydas.mobi/getAd.php5?" + "sdkapid=" + sdkapid + "&auid=" + AutoDetectParameters.getInstance().getDeviceId() + "&adtype=" + adtype + "&zip=" + zip + "&long=" + lon + "&lat=" + lat;
+
+			//get content second time
+			try {
+				result = DataRequest.getResponse(millenialRequestUrl);
+				getLogger().network(" Adserver - parseThirdPartyResponse - third party response: " + result);
+			} catch (Exception e) {
 			}
 		}
+		if (null != result) {
+			if (result.length() < 1) {
+				//set exCampaign
+				getLogger().info(" Adserver - setExcampaigns:" + campaignId);
+				request.setExcampaigns(addExcampaigns(campaignId));
+				adserverState.setSkipBrowserPhase(true);
+			} else {
+				//add table overlay
+				result = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\"><table height=\"100%\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"text-align:center;vertical-align:middle;\">" + result + "</td></tr></table></body></html>";
+			}
+		} else adserverState.setSkipBrowserPhase(true);
+		
+		return result;
+	}
+
+	public void displayBrowserField(String dataResult, String trackUrl) {
+		browserField = new BrowserField();
+		BrowserFieldConfig config = browserField.getConfig();
+        config.setProperty(BrowserFieldConfig.JAVASCRIPT_ENABLED, Boolean.TRUE );
+		config.setProperty(BrowserFieldConfig.ALLOW_CS_XHR, Boolean.TRUE);
+		UniversalConnectionFactory factory = new UniversalConnectionFactory();
+		config.setProperty(BrowserFieldConfig.CONNECTION_FACTORY, factory);
+		config.setProperty(BrowserFieldConfig.CONTROLLER, new CacheProtocolController(browserField, clickListener, trackUrl, thisPtr));
+		browserField.displayContent(dataResult, "");
+		
+		browserField.addListener(new BrowserFieldListener() {
+			public void documentAborted(BrowserField browserField, Document document) throws Exception {
+				//  fire error callback
+				invokeErrorCallback("Document loading abborted");
+				super.documentAborted(browserField, document);
+				adserverState.releaseLatch();
+			}
+			
+			public void documentError(BrowserField browserField, Document document) throws Exception {
+				//  fire error callback
+				invokeErrorCallback("Document loading error");
+				super.documentError(browserField, document);
+				adserverState.releaseLatch();
+			}
+			
+			public void documentLoaded(BrowserField browserField, Document document) throws Exception {
+				//  fire onLoaded callback
+				invokeOnLoadedCallback();
+				super.documentLoaded(browserField, document);
+				displayBrowserField();
+				adserverState.releaseLatch();
+			}
+		});
+	}
+	
+	private void invokeOnStartLoadingCallback() {
+		if (null != eventListener) {
+			getLogger().info(" Adserver - invokeOnStartLoadingCallback()");
+			Application.getApplication().invokeAndWait(new Runnable() {
+				public void run() {
+					eventListener.onStartLoading();
+				}
+			});
+		}
+	}
+
+	private void invokeErrorCallback(final String errorMsg) {
+		if (null != eventListener) {
+			getLogger().info(" Adserver - invokeErrorCallback()");
+			Application.getApplication().invokeAndWait(new Runnable() {
+				public void run() {
+					eventListener.onError(errorMsg);
+				}
+			});
+		}
+	}
+
+	private void invokeOnLoadedCallback() {
+		if (null != eventListener) {
+			getLogger().info(" Adserver - invokeOnLoadedCallback()");
+			Application.getApplication().invokeAndWait(new Runnable() {
+				public void run() {
+					eventListener.onLoaded();
+				}
+			});
+		}
+	}
+	
+	private void invokeIsSimulator() {
+		Application.getApplication().invokeAndWait(new Runnable() {
+			public void run() {
+				Dialog.alert("isSimulator()");
+			}
+		});
+	}
+
+	public void setWebViewInterstitial(WebViewInterstitial webViewInterstitial) {
+		this.webViewInterstitial = webViewInterstitial;
 	}
  }
