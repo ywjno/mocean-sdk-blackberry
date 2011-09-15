@@ -5,6 +5,8 @@ import javax.microedition.location.Criteria;
 import javax.microedition.location.Location;
 import javax.microedition.location.LocationProvider;
 
+import com.adserver.core.AutoDetectParameters;
+
 /**
  * User for determine GPS location <br>
  * Copyright &copy; 2010-2011 mOcean Mobile. A subsidiary of Mojiva, Inc. All Rights Reserved.
@@ -35,7 +37,13 @@ public class LocationManager {
 		if (null == thread || !thread.isAlive()) {
 			thread = new Thread() {
 				public void run() {
+					AutoDetectParameters.isFetchingCoordinates = true;
 					coordinates = getGpsLocation();
+					if (null != coordinates) {
+						AutoDetectParameters.latitude  = String.valueOf(coordinates.getLatitude());
+				        AutoDetectParameters.longitude = String.valueOf(coordinates.getLongitude());
+					}
+			        AutoDetectParameters.isFetchingCoordinates = false;
 				}
 			};
 			thread.start();
@@ -48,8 +56,8 @@ public class LocationManager {
         Coordinates coords;
         LocationProvider lp;
         Criteria cr = new Criteria();
-        cr.setHorizontalAccuracy(2000);
-        cr.setVerticalAccuracy(2000);
+        cr.setHorizontalAccuracy(10000);
+        cr.setVerticalAccuracy(10000);
         cr.setPreferredResponseTime(60000);
 
         try {

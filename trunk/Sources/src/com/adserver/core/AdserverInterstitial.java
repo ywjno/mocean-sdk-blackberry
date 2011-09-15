@@ -539,16 +539,16 @@ public final class AdserverInterstitial {
 	 * Optional.
 	 * Set Ads Type
 	 */
-	public void setAdsType(int adsType) {
-		adserver.setAdsType(adsType);
+	public void setAdsType(int type) {
+		adserver.setType(type);
 	}
 	
 	/**
 	 * Optional.
 	 * Get type of ads.
 	 */
-	public int getAdsType() {
-		return adserver.getAdsType();
+	public int getType() {
+		return adserver.getType();
 	}
 	
 	/**
