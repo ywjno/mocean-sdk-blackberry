@@ -1,5 +1,8 @@
 package com.adserver.core;
 
+import java.util.Vector;
+
+
 
 public class AdserverState {
 	private boolean isDefauitImageRequired = false;
@@ -13,6 +16,7 @@ public class AdserverState {
 	protected Object timerObject = new Object();
 	
 	private AdserverBase adserver;
+	public Worker worker = new Worker();
 	
 	public AdserverState(AdserverBase adserver) {
 		setAdserver(adserver);
@@ -54,10 +58,10 @@ public class AdserverState {
 	}
 
 	public void doIt() {
-
+		
 		Thread workerThread = new Thread() {
 			public void run() {
-
+				
 				adserver.getLogger().info(" AdserverState :workerThread >>>>>>>>>> workerThread - started");
 //				if (isDefauitImageRequired()) {
 				if (adserver.defaultImageIsSet) {
@@ -69,7 +73,8 @@ public class AdserverState {
 				while(isAdserverAlive()) {
 
 					adserver.getLogger().info(" AdserverState :workerThread >>>>>>>>>> begin new cycle");
-					adserver.fetchResource();
+//					adserver.fetchResource();
+					worker.addToQueue(new Object());
 					
 					//waiting for resourceThread
 					synchronized (waitTillPageLoad) {
@@ -80,11 +85,22 @@ public class AdserverState {
 						} 
 					}
 					adserver.getLogger().info(" AdserverState :workerThread >>>>>>>>>> - cycle ended");
+					adserver.getLogger().info(" AdserverState : Threads count: " + Thread.activeCount());
+					
+
+//					//TODO: remove
+//					Application.getApplication().invokeAndWait(new Runnable() {
+//						public void run() {
+//						SimpleAdScreen.thisPtr.add(new LabelField("Active threads: " + Thread.activeCount(), MainScreen.FOCUSABLE));
+//						}
+//					});
+
 				} //while alive
 				adserver.getLogger().info(" AdserverState :workerThread >>>>>>>>>> - finished");
 			};
 		};
 		workerThread.start();
+		
 	}
 	
 	public void releaseLatch() {
@@ -170,6 +186,62 @@ public class AdserverState {
 	public boolean isUpdate() {
 		return isUpdate;
 	}
+	//////////////// test
+	public class Worker implements Runnable {
+	    private boolean quit = false;
+	    private Vector queue = new Vector();
+
+	    public Worker(){
+	    	new Thread( this ).start();
+	    }
+
+	    public void run(){
+			Object o;
+	
+			while( !quit ){
+			    o = null;
+	
+			    synchronized( queue ){
+				if( queue.size() > 0 ){
+				    o = queue.elementAt( 0 );
+				    queue.removeElementAt( 0 );
+				} else {
+				    try {
+				    	queue.wait();
+				    }
+				    catch( InterruptedException e ){
+				    }
+				}
+			    }
+	
+			    if( o != null ){
+				// do something
+			    	adserver.fetchResource();
+//			    	adserver.stub();
+			    }
+			}
+	    }
+
+	    public boolean addToQueue( Object o ){
+		synchronized( queue ){
+			
+		    if( !quit ){
+			 	queue.addElement( o );
+				queue.notify();
+				return true;
+		    }
+		    	return false;
+			}
+	    }
+
+	    public void quit(){
+			synchronized( queue ){
+				quit = true;
+				queue.notify();
+			}
+	    }
+	}
+
 }
 
 

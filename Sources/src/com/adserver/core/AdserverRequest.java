@@ -3,6 +3,8 @@ package com.adserver.core;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import net.rim.device.api.system.GPRSInfo;
+
 import com.adserver.utils.Constants;
 import com.adserver.utils.URLParamEncoder;
 
@@ -21,7 +23,7 @@ public class AdserverRequest {
 	private final String parameter_area = "area";
 	private final String parameter_metro = "metro";
 	private final String parameter_zip = "ZIP";
-	private final String parameter_adstype = "adstype";
+	private final String parameter_type = "type";
 	private final String parameter_key = "key";	
 	private final String parameter_latitude = "lat";
 	private final String parameter_longitude = "long";
@@ -36,6 +38,9 @@ public class AdserverRequest {
 	private final String parameter_version = "version";
 	private final String parameter_connection_speed = "connection_speed";
 	private final String parameter_size_required = "size_required";
+	private final String parameter_mcc = "mcc";
+	private final String parameter_mnc = "mnc";
+	
 	
 	
 
@@ -264,22 +269,25 @@ public class AdserverRequest {
 		return this;
 	}
 	
+
 	/**
-	 * Optional.
-	 * Set Type of advertisement (ADS_TYPE_TEXT_ONLY - text only, 
-	 * ADS_TYPE_IMAGES_ONLY - image only, ADS_TYPE_TEXT_AND_IMAGES - image and text, 
-	 * ADS_TYPE_SMS - SMS ad). SMS will be returned in XML.
-	 * @param adstype
+	 * Type of ads to be returned (1 - text, 2 - image, 4 - richmedia ad). 
+	 * You can set different combinations with these values. 
+	 * For example, 3 = 1 + 2 (text + image), 7 = 1 + 2 + 4 (text + image + richmedia) and so on. 
+	 * Default value is -1 that means any type of ads can be returned.
+	 * @param type
 	 * @return
 	 */
-	public AdserverRequest setAdsType(Integer adstype) {
-		if(adstype != null) {
+	
+	public AdserverRequest setType(Integer type) {
+		if(type != null) {
 			synchronized(parameters) {
-				parameters.put(parameter_adstype, String.valueOf(adstype));
+				if ((type.intValue() >= -1) && (type.intValue() <= 7)) parameters.put(parameter_type, String.valueOf(type));
 			}
 		}
 		return this;
 	}
+	
 
 	public AdserverRequest setKey(Integer key) {
 		if(key != null) {
@@ -574,12 +582,13 @@ public class AdserverRequest {
 		}
 	}
 	
-	public Integer getAdsType() {
+	public Integer getType() {
 		synchronized(parameters) {
-			String adstype = (String)parameters.get(parameter_adstype);
-			return getIntParameter(adstype);
+			String type = (String)parameters.get(parameter_type);
+			return getIntParameter(type);
 		}
 	}
+	
 
 	public Integer getKey() {
 		synchronized(parameters) {
@@ -722,6 +731,16 @@ public class AdserverRequest {
 				value = (String) customParameters.get(key);
 				if (null != value) encoder.addParam(key, value);
 			}
+		}
+		//mcc
+		String cellMCC = Integer.toString(GPRSInfo.getCellInfo().getMCC());
+		if (null != cellMCC) {
+			encoder.addParam(parameter_mcc, cellMCC);
+		}
+		//mnc
+		String cellMNC = Integer.toString(GPRSInfo.getCellInfo().getMNC());
+		if (null != cellMNC) {
+			encoder.addParam(parameter_mnc, cellMNC);
 		}
 		encoder.addParam("count", Constants.COUNT.intValue());
 		//SDK vertion 

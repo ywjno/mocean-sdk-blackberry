@@ -9,6 +9,7 @@ import javax.microedition.io.InputConnection;
 
 import org.w3c.dom.Document;
 
+import net.rim.blackberry.api.browser.Browser;
 import net.rim.device.api.browser.field2.BrowserField;
 import net.rim.device.api.browser.field2.BrowserFieldConfig;
 import net.rim.device.api.browser.field2.BrowserFieldListener;
@@ -19,10 +20,8 @@ import net.rim.device.api.browser.field2.BrowserFieldResponse;
 import net.rim.device.api.browser.field2.ProtocolController;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.DeviceInfo;
-
-import net.rim.device.api.ui.component.Dialog;
-
-
+import net.rim.device.api.ui.UiApplication;
+//import net.rim.device.api.ui.component.Dialog;
 
 import com.adserver.utils.Logger;
 import com.adserver.utils.Utils;
@@ -52,24 +51,14 @@ public class AdserverBase extends WebView {
 
 	private String hashId = ""; 																	// Unique Adserver instance ID
 	public String defaultImage = DEFAULT_IMG; 															// Name of default resource image
-//	private boolean cacheEnabled = false; 															// TODO TEST Disabled cache mode
-
-//	private String url; 																			// Main request URL
-	
-//	private BrowserContent browserContent = null; 													// Browser instance
-//	private boolean isLoaded = false;
 	protected boolean adInternalBrowserEnabled; 													// Open ad links in external or
 																									// internal browser (default:
 																									// DEFAULT_AD_BROWSER_MODE)
 	protected int adReloadPreiod = AD_RELOAD_PERIOD; 												// Ad reload timeout
-//	protected int adReloadPeriodSave = adReloadPreiod;
 	
 	private String advertiserId; 
 	private String groupCode;
 	public AdserverRequest request = new AdserverRequest();
-//	protected Object waitTillPageLoad = new Object();
-//	protected Object timerObject = new Object();
-//	protected Object onVisibilityObject = new Object();
 	
 	protected int runCount = 0;
 	private boolean userDefinedCoordinates = false;
@@ -79,36 +68,22 @@ public class AdserverBase extends WebView {
 	protected AdClickListener clickListener;
 	protected EventListener eventListener;
 	
-//	private boolean urgentUpdate = false;
 	public boolean defaultImageIsSet = false;
-//	private boolean runWhileTrue = true;
 	private String excampaigns = null;
 	CacheManager cacheManager;
-//	private boolean exitFlag = false;
 	AdserverState adserverState;
 	String trackUrl = null;
 	boolean isSimulator = false;
 	private WebViewInterstitial webViewInterstitial = null;
 	Thread resourceFetchThread = null;
-	
+	private int iterationNumber = 0;
 	private Logger logger = null;
-
-	public Logger getLogger() {
-		if (null == logger) {
-			//Log started
-			int hashCode = thisPtr.getClass().hashCode();
-			hashId = Integer.toString(hashCode);
-			logger = new Logger(hashId);
-		}
-		return logger;
-	}
-	public void setLogLevel(int logLevel) {
-		getLogger().setLogLevel(logLevel);
-	}
-	
-	public void setLoggerId (String id) {
-		getLogger().setHashId(id);
-	}
+	private int focusedFieldIndex = 0;
+	private static String AD_CONTENT_TYPE = null;
+	private static String AD_CONTENT_TYPE_PREVIOUS = null;
+	private static final String AD_CONTENT_TYPE_BROWSER = "browser";
+	private static final String AD_CONTENT_TYPE_VIDEO = "video";
+	private String clickLink = "";
 
 	/**
 	 * Constructor
@@ -196,7 +171,7 @@ public class AdserverBase extends WebView {
 			request.setParamBG(paramBG);
 			request.setParamLINK(paramLINK);
 			request.setCarrier(carrier);
-			request.setAdsType(new Integer (3));
+//			request.setType(new Integer (-1));
 			request.setKey(new Integer (1));
 
 			adserverState = new AdserverState(this);
@@ -205,7 +180,7 @@ public class AdserverBase extends WebView {
 			request.setUa(userAgent);
 			
 			getLogger().debug("Adserver : Log started");
-			
+			AD_CONTENT_TYPE = null;
 			//is simulator
 			isSimulator = DeviceInfo.isSimulator();
 	}
@@ -704,19 +679,21 @@ public class AdserverBase extends WebView {
 	
 	/**
 	 * Optional.
-	 * Set type of ads (1 - text only, 2 - image only, 3 - image and text, 6 - SMS ad). SMS will be ONLY returned in XML and should be used along with key=3. 
-	 * @param adsType
+	 * Type of ads to be returned (1 - text, 2 - image, 4 - richmedia ad). You can set different combinations with these values. For example, 3 = 1 + 2 (text + image), 7 = 1 + 2 + 4 (text + image + richmedia) and so on. Default value is -1 that means any type of ads can be returned.
+	 * @param type
 	 */
-	public void setAdsType(int adsType) {
-		request.setAdsType(new Integer(adsType));
+	public void setType(int type) {
+		request.setType(new Integer(type));
 	}
+	
+	
 	
 	/**
 	 * Optional.
 	 * Get Type of ads. 
 	 */
-	public int getAdsType() {
-		return (request.getAdsType()).intValue();
+	public int getType() {
+		return (request.getType()).intValue();
 	}
 
 	/**
@@ -847,7 +824,7 @@ public class AdserverBase extends WebView {
 		super.onDisplay();
 		
 		//is simulator
-		//TO DO - invoke when proper api will be available
+		//TODO - invoke when proper api will be available
 		//		if (isSimulator) invokeIsSimulator();
 		getLogger().info(" Adserver - onDisplay() - Adserver object added to screen");
 		adserverState.doIt();
@@ -856,14 +833,17 @@ public class AdserverBase extends WebView {
 	protected void onUndisplay() {
 		super.onUndisplay();
 		getLogger().info(" Adserver - onUndisplay() - Adserver object removed from screen");
-		//trying to terminate thread
-		if ((null != resourceFetchThread) && (resourceFetchThread.isAlive())) {
-			resourceFetchThread.interrupt();
-		}
 		// need to edit adReloadPeriod Check loop
 		adReloadPreiod = 1;
 		adserverState.setAdserverAlive(false);
 		adserverState.timerNotify();
+		adserverState.worker.quit();
+		try{
+			deleteAll();
+			browserField = null;
+		}catch (Exception e) {
+		}
+		System.gc();
 	}
 	
 	protected void onVisibilityChange(boolean visible) {
@@ -921,108 +901,172 @@ public class AdserverBase extends WebView {
 	}
 	
 	public void fetchResource() {
-		
-//		Thread resourceFetchThread = new Thread(){
-		resourceFetchThread = new Thread(){
-			public void run() {
 
-				String requestUrl = null;
-				String dataResult = null;
-				trackUrl = null;
-				adserverState.setUpdate(false);
-				adserverState.setSkipBrowserPhase(false);
+					String requestUrl = null;
+					String dataResult = null;
+					trackUrl = null;
+					adserverState.setUpdate(false);
+					adserverState.setSkipBrowserPhase(false);
+					AD_CONTENT_TYPE_PREVIOUS = AD_CONTENT_TYPE;
 
-				//fire event callback onStartLoading()
-				invokeOnStartLoadingCallback();
+					//fire event callback onStartLoading()
+					invokeOnStartLoadingCallback();
 
 				if (!userDefinedCoordinates) {
-					Thread getGpsCoordinater = new Thread() {
-						public void run() {
-							String latitude = AutoDetectParameters.getInstance().getLatitude();
-							String longitude= AutoDetectParameters.getInstance().getLongitude();
+						String latitude = AutoDetectParameters.getInstance().getLatitude();
+						String longitude= AutoDetectParameters.getInstance().getLongitude();
 
-							if ((null != latitude) || (null != longitude)) {
-								getLogger().info(" Adserver : coordinates detected: latitude: "+ latitude +", longitude : " + longitude);
-								request.setLatitude(latitude);
-								request.setLongitude(longitude);
+						if ((null != latitude) || (null != longitude)) {
+							getLogger().info(" Adserver : coordinates detected: latitude: "+ latitude +", longitude : " + longitude);
+							request.setLatitude(latitude);
+							request.setLongitude(longitude);
+						}
+				}
+
+					requestUrl = request.createURL();
+					getLogger().debug(" Adserver : requested URL :"+ requestUrl);
+					
+					//get data in main thread
+					/////////////////////////////////////////////////////////////////////////
+					try {
+						dataResult = DataRequest.getResponse(requestUrl);
+						getLogger().network(" Adserver - resourseThread response :"+ dataResult);
+					} catch (Exception e) {
+						//fire error callback - network error
+						getLogger().info(" Adserver - DataRequest Error: " + e.getMessage() );
+						invokeErrorCallback("network error");
+					}
+
+					//////////////////////////////////////////////////////////////////////////
+					//parse response
+					//error check
+					if((null != dataResult)) {
+						if ((dataResult.startsWith("<!-- invalid params -->")) || (dataResult.equals(""))) {
+							if ((dataResult.startsWith("<!-- invalid params -->"))) {
+								getLogger().debug(" Adserver - invalid params error");
+								invokeErrorCallback("invalid params");
 							}
+							if (null != webViewInterstitial) {
+								//empty content - close screen
+								webViewInterstitial.onEmptyContent();
+							}
+							adserverState.setSkipBrowserPhase(true);
 						}
-					};
-					getGpsCoordinater.start();
-				}
+						////////////////////////////////////////////////////////////
+						String videoData = Utils.scrape(dataResult, "<video", "/>");
+						String externalCampaignData = Utils.scrape(dataResult, "<external_campaign", "</external_campaign>");
+						clickLink = Utils.scrape(dataResult, "<a href=\"", "\">");
 
-				requestUrl = request.createURL();
-				getLogger().debug(" Adserver : requested URL :"+ requestUrl);
-				
-				//DEbug
-				/////////////////////////////////////////////////////////////////////////
-				try {
-					dataResult = DataRequest.getResponse(requestUrl);
-					getLogger().network(" Adserver - resourseThread response :"+ dataResult);
-				} catch (Exception e) {
-					//fire error callback - network error
-					getLogger().info(" Adserver - DataRequest Error: " + e.getMessage() );
-					invokeErrorCallback("network error");
-				}
-
-				//////////////////////////////////////////////////////////////////////////
-//				tEST DATA RESPONSES
-//				dataResult = "<a href=\"http://forum.yola.ru\"><video src=\"http://192.168.1.153/mocean/res/video/sw.mp4\" width=\"320\" height=\"240\"/></a><br/>";	
-//				dataResult = "<a href=\"http://rcrossia.ru/\"><video src=\"http://192.168.1.153/mocean/res/video/team.mov\" width=\"320\" height=\"240\"/></a><br/>";
-//				dataResult = "<a href=\"http://ads1.mocean.mobi/redir/ab091860-7aee-11e0-b3a8-001d096a03fe/0/14144\"><video src=\"http://mobile.mojiva.com/5_SILclip_iphone.mp4\"/></a><br/>";
-//				dataResult = "<table width=\"100%\"><tr><td><a href=\"mailto:ivan.efimenko@teamforce.org\">mailto1</a></td><td><ahref=\"mailto:foo@example.com?cc=bar@example.com&subject=Greetings%20from%20Cupertino!&body=Wish%20you%20were%20here!\">mailto2</a></td><td><ahref=\"tel:+79026707705\">tel</a></td><td><a href=\"sms:+79026707705\">sms</a></td></tr><tr><td><a href=\"http://maps.google.com/maps?q=cupertino\">map</a></td><td><a href=\"http://www.youtube.com/v/TWKnhu2qqOY\">youtube</a></td><td><a href=\"http://phobos.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=156093464&id=156093462&s=143441\">itunes</a></td></tr></table>";
-//				dataResult = "<a href=\"http://rcrossia.ru/\"><video src=\"http://192.168.1.153/mocean/res/video/sample.mov\" width=\"320\" height=\"240\"/></a><br/>";
-				//parse response
-				//error check
-				if((null != dataResult)) {
-					if ((dataResult.startsWith("<!-- invalid params -->")) || (dataResult.equals(""))) {
-						if ((dataResult.startsWith("<!-- invalid params -->"))) {
-							getLogger().debug(" Adserver - invalid params error");
-							invokeErrorCallback("invalid params");
+						//response contains video data ?
+						if((videoData != null) && (videoData.length() > 0)) {
+							getLogger().info(" Adserver - video data detected");
+							parseVideoResponse(videoData, dataResult);
+							adserverState.setSkipBrowserPhase(true);
+							AD_CONTENT_TYPE = AD_CONTENT_TYPE_VIDEO;
+						} 
+						// response contains Third party data ?
+						else if ((externalCampaignData != null) &&(externalCampaignData.length() > 0)){
+							getLogger().info(" Adserver - thisr party date detected");
+							dataResult = parseThirdPartyResponse(externalCampaignData, dataResult);
+							AD_CONTENT_TYPE = AD_CONTENT_TYPE_BROWSER;
+						} 
+						//response - plain data
+						else {
+							//add table overlay
+							dataResult = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\"><table height=\"100%\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"text-align:center;vertical-align:middle;\">" + dataResult + "</td></tr></table></body></html>";
+							AD_CONTENT_TYPE = AD_CONTENT_TYPE_BROWSER;
 						}
-						if (null != webViewInterstitial) {
-							//empty content - close screen
-							webViewInterstitial.onEmptyContent();
+
+						//Pass content to browser
+						if (!adserverState.isSkipBrowserPhase()) {
+							getLogger().debug(" Adserver - send display data to browser control");
+//							printContentType();
+							if ((AD_CONTENT_TYPE.equals(AD_CONTENT_TYPE_BROWSER)) && (AD_CONTENT_TYPE.equals(AD_CONTENT_TYPE_PREVIOUS))) {
+								//JUST update
+								updateBrowser(dataResult);	
+							} else {
+								//delete old
+								synchronized (UiApplication.getEventLock()) {
+									try{
+										deleteAll();
+									}catch (Exception e) {
+									}
+								}
+								//setup and update
+								setupBrowser(trackUrl);
+								synchronized (UiApplication.getEventLock()) {
+									try{
+										add(browserField);
+									}catch (Exception e) {
+									}
+								}
+								updateBrowser(dataResult);
+							}
+						} else {
+							// release wait loop latch
+							adserverState.releaseLatch();
 						}
-						adserverState.setSkipBrowserPhase(true);
-					}
-					////////////////////////////////////////////////////////////
-					String videoData = Utils.scrape(dataResult, "<video", "/>");
-					String externalCampaignData = Utils.scrape(dataResult, "<external_campaign", "</external_campaign>");
-
-					//response contains video data ?
-					if((videoData != null) && (videoData.length() > 0)) {
-						getLogger().info(" Adserver - video data detected");
-						parseVideoResponse(videoData, dataResult);
-						adserverState.setSkipBrowserPhase(true);
-					} 
-					// response contains Third party data ?
-					else if ((externalCampaignData != null) &&(externalCampaignData.length() > 0)){
-						getLogger().info(" Adserver - thisr party date detected");
-						dataResult = parseThirdPartyResponse(externalCampaignData, dataResult);
-					} 
-					//response - plain data
-					else {
-						//add table overlay
-						dataResult = "<html><body style=\"margin: 0px; padding: 0px; width: 100%; height: 100%\"><table height=\"100%\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"text-align:center;vertical-align:middle;\">" + dataResult + "</td></tr></table></body></html>";
-					}
-
-					//Pass content to browser
-					if (!adserverState.isSkipBrowserPhase()) {
-						getLogger().debug(" Adserver - send display data to browser control");
-						displayBrowserField(dataResult, trackUrl);
+						////////////////////////////////////////////////////////////
 					} else {
-						// release wait loop latch
 						adserverState.releaseLatch();
 					}
-					////////////////////////////////////////////////////////////
-				} else {
-					adserverState.releaseLatch();
-				}
-			}
-		};
+	}
+	public void updateBrowser (String dataResult) {
+		try {
+//			focusedFieldIndex = UiApplication.getUiApplication().getActiveScreen().getFieldWithFocusIndex();
+			browserField.displayContent(dataResult, "");
+//			UiApplication.getUiApplication().getActiveScreen().getField(focusedFieldIndex).setFocus();
+		} catch (Exception e) {
+		}
+	}
+	
+	public void setupBrowser (String trackUrl) {
+		BrowserFieldConfig config = new BrowserFieldConfig();
+		config.setProperty(BrowserFieldConfig.NAVIGATION_MODE, BrowserFieldConfig.NAVIGATION_MODE_CARET);
+		config.setProperty(BrowserFieldConfig.JAVASCRIPT_ENABLED, Boolean.TRUE );
+		config.setProperty(BrowserFieldConfig.ALLOW_CS_XHR, Boolean.TRUE);
+		UniversalConnectionFactory factory = new UniversalConnectionFactory();
+		config.setProperty(BrowserFieldConfig.CONNECTION_FACTORY, factory);
+		config.setProperty(BrowserFieldConfig.CONTROLLER, new CacheProtocolController(browserField, clickListener, trackUrl, thisPtr));
+
+		browserField = new BrowserField(config);
+//		config = browserField.getConfig();
 		
-		resourceFetchThread.start();
+		
+//		browserField.addListener(null);
+		browserField.addListener(new BrowserFieldListener() {
+			public void documentAborted(BrowserField browserField, Document document) throws Exception {
+				//  fire error callback
+				invokeErrorCallback("Document loading abborted");
+				super.documentAborted(browserField, document);
+				adserverState.releaseLatch();
+			}
+			
+			public void documentError(BrowserField browserField, Document document) throws Exception {
+				//  fire error callback
+				invokeErrorCallback("Document loading error");
+				super.documentError(browserField, document);
+				adserverState.releaseLatch();
+			}
+			
+			public void documentLoaded(BrowserField browserField, Document document) throws Exception {
+				//  fire onLoaded callback
+				invokeOnLoadedCallback();
+				super.documentLoaded(browserField, document);
+				synchronized (UiApplication.getEventLock()) {
+//					//save global focus
+					int focusedFieldIndex = UiApplication.getUiApplication().getActiveScreen().getFieldWithFocusIndex();
+					//set focus back to browser
+					AdserverBase.this.browserField.setFocus();
+					//try to restore
+					
+					if (focusedFieldIndex >0 ) {
+						UiApplication.getUiApplication().getActiveScreen().getField(focusedFieldIndex).setFocus();
+					}
+				}
+				adserverState.releaseLatch();
+			}
+		});
 	}
 
 	private void parseVideoResponse(String videoData, String dataResult) {
@@ -1098,41 +1142,14 @@ public class AdserverBase extends WebView {
 		
 		return result;
 	}
-
-	public void displayBrowserField(String dataResult, String trackUrl) {
-		browserField = new BrowserField();
-		BrowserFieldConfig config = browserField.getConfig();
-        config.setProperty(BrowserFieldConfig.JAVASCRIPT_ENABLED, Boolean.TRUE );
-		config.setProperty(BrowserFieldConfig.ALLOW_CS_XHR, Boolean.TRUE);
-		UniversalConnectionFactory factory = new UniversalConnectionFactory();
-		config.setProperty(BrowserFieldConfig.CONNECTION_FACTORY, factory);
-		config.setProperty(BrowserFieldConfig.CONTROLLER, new CacheProtocolController(browserField, clickListener, trackUrl, thisPtr));
-		browserField.displayContent(dataResult, "");
-		
-		browserField.addListener(new BrowserFieldListener() {
-			public void documentAborted(BrowserField browserField, Document document) throws Exception {
-				//  fire error callback
-				invokeErrorCallback("Document loading abborted");
-				super.documentAborted(browserField, document);
-				adserverState.releaseLatch();
-			}
-			
-			public void documentError(BrowserField browserField, Document document) throws Exception {
-				//  fire error callback
-				invokeErrorCallback("Document loading error");
-				super.documentError(browserField, document);
-				adserverState.releaseLatch();
-			}
-			
-			public void documentLoaded(BrowserField browserField, Document document) throws Exception {
-				//  fire onLoaded callback
-				invokeOnLoadedCallback();
-				super.documentLoaded(browserField, document);
-				displayBrowserField();
-				adserverState.releaseLatch();
-			}
-		});
-	}
+//	public void printContentType() {
+//		iterationNumber++;
+//		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//		System.out.println("Iteration: "+ iterationNumber);
+//		System.out.println("Previous state: " + AD_CONTENT_TYPE_PREVIOUS);
+//		System.out.println("Current content type: " + AD_CONTENT_TYPE);
+//		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//	}
 	
 	private void invokeOnStartLoadingCallback() {
 		if (null != eventListener) {
@@ -1167,15 +1184,39 @@ public class AdserverBase extends WebView {
 		}
 	}
 	
-	private void invokeIsSimulator() {
-		Application.getApplication().invokeAndWait(new Runnable() {
-			public void run() {
-				Dialog.alert("isSimulator()");
-			}
-		});
-	}
+//	TODO: proper implamentation
+//	private void invokeIsSimulator() {
+//		Application.getApplication().invokeAndWait(new Runnable() {
+//			public void run() {
+//				Dialog.alert("isSimulator()");
+//			}
+//		});
+//	}
 
 	public void setWebViewInterstitial(WebViewInterstitial webViewInterstitial) {
 		this.webViewInterstitial = webViewInterstitial;
 	}
+	public Logger getLogger() {
+		if (null == logger) {
+			//Log started
+			int hashCode = thisPtr.getClass().hashCode();
+			hashId = Integer.toString(hashCode);
+			logger = new Logger(hashId);
+		}
+		return logger;
+	}
+
+	public void setLogLevel(int logLevel) {
+		getLogger().setLogLevel(logLevel);
+	}
+	
+	public void setLoggerId (String id) {
+		getLogger().setHashId(id);
+	}
+	protected boolean navigationClick(int status, int time) {
+		if (clickLink.startsWith("http")) Browser.getDefaultSession().displayPage(clickLink);
+		return super.navigationClick(status, time);
+		
+	}
+
  }

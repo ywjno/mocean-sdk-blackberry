@@ -33,7 +33,7 @@ public class AdserverURL {
 
 
    /** version (set during build process to "2.0.0 beta"). */
-   private static String version = "2.2";
+   private static String version = "2.2.4";
 
    /**
     * Get version (set during build process to "2.0.0 beta").
