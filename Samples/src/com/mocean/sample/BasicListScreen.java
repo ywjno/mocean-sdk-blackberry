@@ -1,6 +1,7 @@
 package com.mocean.sample;
 
 import com.mocean.sample.basic.*;
+import com.mocean.sample.basic.callbacks.AdThirdPartyCallbackScreen;
 
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.MenuItem;
@@ -43,6 +44,12 @@ public class BasicListScreen extends ListScreen {
 
 		_listField.insert(6);
 		_callback.insert("Test mode enabled", 6);
+		
+		_listField.insert(7);
+		_callback.insert("Third Party callback", 7);
+
+		_listField.insert(7);
+		_callback.insert("Manual refresh button", 8);
 
 		add(_listField);
 
@@ -88,6 +95,12 @@ public class BasicListScreen extends ListScreen {
 					break;
 				case 6:
 					UiApplication.getUiApplication().pushScreen(new SimpleAdTestModeScreen());
+					break;
+				case 7:
+					UiApplication.getUiApplication().pushScreen(new AdThirdPartyCallbackScreen());
+					break;
+				case 8:
+					UiApplication.getUiApplication().pushScreen(new ManualRefreshScreen());
 					break;
 				}
 			}

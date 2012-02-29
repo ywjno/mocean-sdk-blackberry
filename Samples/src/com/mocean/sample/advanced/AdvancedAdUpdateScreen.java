@@ -1,6 +1,6 @@
 package com.mocean.sample.advanced;
 
-import com.adserver.core.Adserver;
+import com.MASTAdview.core.MASTAdview;
 
 import net.rim.device.api.ui.TouchEvent;
 import net.rim.device.api.ui.component.ButtonField;
@@ -9,13 +9,13 @@ import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.container.MainScreen;
 
 public class AdvancedAdUpdateScreen extends MainScreen{
-	Adserver field;
+	MASTAdview field;
 
 	public AdvancedAdUpdateScreen() {
 		super();
 		setTitle("Using Update() Sample");
 		
-		field = new Adserver(8061, 20249);
+		field = new MASTAdview(8061, 20249);
 		field.setSize(320,50);
 		field.setUpdateTime(20);
 		add(field);

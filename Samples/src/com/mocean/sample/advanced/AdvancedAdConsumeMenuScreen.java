@@ -1,7 +1,7 @@
 package com.mocean.sample.advanced;
 
-import com.adserver.core.AdClickListener;
-import com.adserver.core.Adserver;
+import com.MASTAdview.core.AdClickListener;
+import com.MASTAdview.core.MASTAdview;
 
 import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.component.LabelField;
@@ -9,12 +9,12 @@ import net.rim.device.api.ui.component.Menu;
 import net.rim.device.api.ui.container.MainScreen;
 
 public class AdvancedAdConsumeMenuScreen extends MainScreen implements AdClickListener{
-	Adserver field;
+	MASTAdview field;
 	
 	public AdvancedAdConsumeMenuScreen() {
 		super();
 		setTitle("Advances Ad Orientation Sample");
-		field = new Adserver(8061, 16741);
+		field = new MASTAdview(8061, 16741);
 		field.setSize(320,50);
 		field.setUpdateTime(5);
 		field.setClickListener(this);

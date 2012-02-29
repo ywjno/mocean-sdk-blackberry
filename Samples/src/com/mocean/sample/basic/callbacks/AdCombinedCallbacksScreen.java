@@ -1,23 +1,23 @@
 package com.mocean.sample.basic.callbacks;
 
-import com.adserver.core.AdClickListener;
-import com.adserver.core.Adserver;
+import com.MASTAdview.core.AdClickListener;
+import com.MASTAdview.core.MASTAdview;
 
 
 import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.container.MainScreen;
 
-public class AdCombinedCallbacksScreen  extends MainScreen  implements com.adserver.core.EventListener, AdClickListener{
+public class AdCombinedCallbacksScreen  extends MainScreen  implements com.MASTAdview.core.EventListener, AdClickListener{
 	AdCombinedCallbacksScreen thisPtr;
-	Adserver field;
+	MASTAdview field;
 		
 	public AdCombinedCallbacksScreen() {
 		super(Manager.VERTICAL_SCROLL | Manager.VERTICAL_SCROLLBAR);
 		thisPtr = this;
 		setTitle("adCombinedCallbacks Sample");
 		
-		field = new Adserver(8061, 20249);
+		field = new MASTAdview(8061, 20249);
 		field.setSize(320,50);
 		field.setUpdateTime(5);
 		field.addListener(this);

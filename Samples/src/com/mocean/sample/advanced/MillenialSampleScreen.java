@@ -1,8 +1,8 @@
 package com.mocean.sample.advanced;
 
-import com.adserver.core.AdClickListener;
-import com.adserver.core.Adserver;
-import com.adserver.core.EventListener;
+import com.MASTAdview.core.AdClickListener;
+import com.MASTAdview.core.EventListener;
+import com.MASTAdview.core.MASTAdview;
 
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.container.MainScreen;
@@ -16,7 +16,7 @@ public class MillenialSampleScreen extends MainScreen implements EventListener, 
 		setTitle("Millenial SDK Sample");
 		
 		//Millenial sample zone
-		Adserver field =  new Adserver(8061, 17324);
+		MASTAdview field =  new MASTAdview(8061, 17324);
 		field.setUpdateTime(5);
 		field.addListener(this);
 		field.setClickListener(this);

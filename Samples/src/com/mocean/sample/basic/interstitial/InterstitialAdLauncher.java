@@ -1,12 +1,13 @@
 package com.mocean.sample.basic.interstitial;
 
-import com.adserver.core.AdserverInterstitial;
+import com.MASTAdview.core.MASTAdview;
 
 
 public class InterstitialAdLauncher{
 	
 	public InterstitialAdLauncher() {
-		AdserverInterstitial interstitialControl = new AdserverInterstitial(8061, 16112);
+		MASTAdview interstitialControl = new MASTAdview(8061, 16112);
+//		AdserverInterstitial interstitialControl = new AdserverInterstitial(8061, 16112);
 //		AdserverInterstitial interstitialControl = new AdserverInterstitial(0, 0);
 		//set ad preferred size
 		interstitialControl.setMinSizeX(320);
@@ -15,6 +16,6 @@ public class InterstitialAdLauncher{
 		//set size
 		interstitialControl.setSize(320, 460);
 		//Push Interstitial control to display stack
-		interstitialControl.pushScreen();
+		interstitialControl.show();
 	}
 }

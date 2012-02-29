@@ -1,7 +1,7 @@
 package com.mocean.sample.basic;
 
-import com.adserver.core.Adserver;
-import com.adserver.core.EventListener;
+import com.MASTAdview.core.EventListener;
+import com.MASTAdview.core.MASTAdview;
 
 
 import net.rim.device.api.ui.Manager;
@@ -10,14 +10,14 @@ import net.rim.device.api.ui.container.MainScreen;
 
 public class SimpleAdLocationScreen extends MainScreen  implements EventListener{
 	SimpleAdLocationScreen thisPtr;
-	Adserver field;
+	MASTAdview field;
 	
 	public SimpleAdLocationScreen() {
 		super(Manager.VERTICAL_SCROLL | Manager.VERTICAL_SCROLLBAR);
 		thisPtr = this;
 		setTitle("Carier Autodetection Sample");
 		
-		field = new Adserver(8061, 20249);
+		field = new MASTAdview(8061, 20249);
 		field.setSize(320,50);
 		field.setUpdateTime(5);
 		field.addListener(this);

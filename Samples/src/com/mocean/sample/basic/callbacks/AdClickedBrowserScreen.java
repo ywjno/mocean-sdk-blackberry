@@ -1,7 +1,7 @@
 package com.mocean.sample.basic.callbacks;
 
-import com.adserver.core.AdClickListener;
-import com.adserver.core.Adserver;
+import com.MASTAdview.core.AdClickListener;
+import com.MASTAdview.core.MASTAdview;
 
 import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.component.LabelField;
@@ -14,7 +14,7 @@ public class AdClickedBrowserScreen extends MainScreen implements AdClickListene
 		super(Manager.VERTICAL_SCROLL | Manager.VERTICAL_SCROLLBAR);
 		thisPtr = this;
 		setTitle("Ad Click callback Sample");
-		Adserver field = new Adserver(8061, 16109);
+		MASTAdview field = new MASTAdview(8061, 16109);
 		field.setClickListener(this);
 		add(field);
 		add(new LabelField("Click on Ad to open browser:"));

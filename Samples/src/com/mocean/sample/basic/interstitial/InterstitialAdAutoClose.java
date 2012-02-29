@@ -1,11 +1,12 @@
 package com.mocean.sample.basic.interstitial;
 
-import com.adserver.core.AdserverInterstitial;
+import com.MASTAdview.core.AdserverInterstitial;
+import com.MASTAdview.core.MASTAdview;
 
 public class InterstitialAdAutoClose {
 	
 	public InterstitialAdAutoClose() {
-		AdserverInterstitial interstitialControl = new AdserverInterstitial(8061, 16112);
+		MASTAdview interstitialControl = new MASTAdview(8061, 16112);
 		//set ad preferred size
 		interstitialControl.setMinSizeX(320);
 		interstitialControl.setMinSizeY(460);
@@ -14,7 +15,7 @@ public class InterstitialAdAutoClose {
 		//set close time = 10 sec
 		interstitialControl.setAutoCloseInterstitialTime(10000);
 		//Push Interstitial control to display stack
-		interstitialControl.pushScreen();
+		interstitialControl.show();
 		
 	}
 

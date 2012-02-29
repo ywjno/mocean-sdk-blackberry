@@ -1,18 +1,18 @@
 package com.mocean.sample.advanced;
 
-import com.adserver.core.Adserver;
+import com.MASTAdview.core.MASTAdview;
 
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.container.MainScreen;
 
 public class AdvancedAdOrientationScreen extends MainScreen{
-	Adserver field;
+	MASTAdview field;
 	
 	public AdvancedAdOrientationScreen() {
 		super();
 		setTitle("Advances Ad Orientation Sample");
-		field = new Adserver(8061, 16741);
+		field = new MASTAdview(8061, 16741);
 		field.setSize(320,50);
 		field.setUpdateTime(5);
 		add(field);
@@ -26,7 +26,9 @@ public class AdvancedAdOrientationScreen extends MainScreen{
 		       {
 		    	   field.setSite(8061);
 		    	   field.setZone(16741);
-		    	   field.setSize(468, 60);
+		    	   int displayWidth = Display.getWidth();
+		    	   field.setSize(displayWidth, 50);
+//		    	   field.setSize(468, 60);
 		    	   field.setMinSizeX(468);
 		    	   field.setMinSizeY(60);
 		    	   field.setMaxSizeX(468);
@@ -37,7 +39,8 @@ public class AdvancedAdOrientationScreen extends MainScreen{
 		       {
 		    	   field.setSite(8061);
 		    	   field.setZone(20249);
-		    	   field.setSize(320, 50);
+		    	   int displayWidth = Display.getWidth();
+		    	   field.setSize(displayWidth, 50);
 		    	   field.setMinSizeX(320);
 		    	   field.setMinSizeY(50);
 		    	   field.setMaxSizeX(320);
