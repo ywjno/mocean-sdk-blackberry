@@ -91,8 +91,7 @@ public class AdserverBase extends WebView {
 	private boolean contentAlignment = false;
 	private boolean autoCollapseState = true;
 	private boolean showPreviousAdonError = true;
-
-
+	
 	
 	/**
 	 * Constructor
@@ -1326,6 +1325,15 @@ public class AdserverBase extends WebView {
 		contentAlignment = enable;
 	}
 	
+	public void setLocationDetection(boolean enable)
+	{
+		AutoDetectParameters.getInstance().setLocationDetection(enable);
+	}
+	
+	public void setLocationMinWaitMillis(int value)
+	{
+		AutoDetectParameters.getInstance().setLocationMinWaitMillis(value);
+	}
 	
 	public String[] split(String strString, String strDelimiter)
 	{
