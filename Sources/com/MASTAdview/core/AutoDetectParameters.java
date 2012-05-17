@@ -24,6 +24,8 @@ public class AutoDetectParameters {
 	public static volatile String longitude = null;
 	public static volatile String latitude = null;
 	public static volatile boolean isFetchingCoordinates = false;
+	private boolean locationDetection;
+	private int locationMinWaitMillis;
 	
 	
 	private AutoDetectParameters() {
@@ -33,6 +35,8 @@ public class AutoDetectParameters {
 			md5DeviceId = Utils.getMD5Hash(deviceId);
 			country = Locale.getDefault().getCountry();
 			carrier =  RadioInfo.getCurrentNetworkName();
+			locationDetection = false;
+			locationMinWaitMillis = 5 * 60 * 1000;	// 5 minutes (in millis)
 	}
 	
 	public static synchronized AutoDetectParameters getInstance() {
@@ -59,14 +63,41 @@ public class AutoDetectParameters {
 		return md5DeviceId;
 	}
 	
+	public boolean getLocationDetection()
+	{
+		return locationDetection;
+	}
+	
+	public void setLocationDetection(boolean value)
+	{
+		locationDetection = value;
+	}
+	
+	public int getLocationMinWaitMillis()
+	{
+		return locationMinWaitMillis;
+	}
+	
+	public void setLocationMinWaitMillis(int value)
+	{
+		locationMinWaitMillis = value;
+	}
+	
 	public String getLongitude() {
 		if (null != longitude) {
 			return longitude;
 		} else if (isFetchingCoordinates) {
 			return null;
 		} else {
-			Coordinates coords = LocationManager.getInstance().getCoordinates();
-			return null != coords ? String.valueOf(coords.getLongitude()) : null;
+			if (locationDetection)
+			{
+				Coordinates coords = LocationManager.getInstance(locationMinWaitMillis).getCoordinates();
+				return null != coords ? String.valueOf(coords.getLongitude()) : null;
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 
@@ -76,8 +107,15 @@ public class AutoDetectParameters {
 		} else if (isFetchingCoordinates) {
 			return null;
 		} else {
-			Coordinates coords = LocationManager.getInstance().getCoordinates();
-			return null != coords ? String.valueOf(coords.getLatitude()) : null;
+			if (locationDetection)
+			{
+				Coordinates coords = LocationManager.getInstance(locationMinWaitMillis).getCoordinates();
+				return null != coords ? String.valueOf(coords.getLatitude()) : null;
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 	

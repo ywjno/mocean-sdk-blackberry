@@ -19,7 +19,8 @@ public class MASTAdviewRequest {
 	private final String parameter_region = "region";
 	private final String parameter_city = "city";
 	private final String parameter_area = "area";
-	private final String parameter_metro = "metro";
+	//private final String parameter_metro = "metro";
+	private final String parameter_dma = "dma";
 	private final String parameter_zip = "ZIP";
 	private final String parameter_type = "type";
 	private final String parameter_key = "key";	
@@ -242,20 +243,35 @@ public class MASTAdviewRequest {
 	}
 
 	/**
-	 * Optional.
+	 * Deprecated. Use Dma instead.
 	 * Set Metro code of a user. For US only. 
-	 * @param metro
+	 * @param dma
 	 * @return
 	 */
 	public MASTAdviewRequest setMetro(String metro) {
 		if(metro != null) {
 			synchronized(parameters) {
-				parameters.put(parameter_metro, metro);
+				parameters.put(parameter_dma, metro);
 			}
 		}
 		return this;
 	}
 
+	/**
+	 * Optional.
+	 * Set Dma code of a user. For US only. 
+	 * @param dma
+	 * @return
+	 */
+	public MASTAdviewRequest setDma(String dma) {
+		if(dma != null) {
+			synchronized(parameters) {
+				parameters.put(parameter_dma, dma);
+			}
+		}
+		return this;
+	}
+	
 	/**
 	 * Optional.
 	 * Set Zip/Postal code of user. For US only. 
@@ -570,12 +586,19 @@ public class MASTAdviewRequest {
 		}
 	}
 
+	// Deprecated. Use Dma instead.
 	public String getMetro() {
 		synchronized(parameters) {
-			return (String)parameters.get(parameter_metro);
+			return (String)parameters.get(parameter_dma);
 		}
 	}
 
+	public String getDma() {
+		synchronized(parameters) {
+			return (String)parameters.get(parameter_dma);
+		}
+	}
+	
 	public String getZip() {
 		synchronized(parameters) {
 			return (String)parameters.get(parameter_zip);
@@ -641,16 +664,37 @@ public class MASTAdviewRequest {
 	}
 
 	public Integer getSizeX() {
+		Integer minX = getMinSizeX();
+		
 		synchronized(parameters) {
-			String sizeX = (String)parameters.get(parameter_size_x);
-			return getIntParameter(sizeX);
+			String size = (String)parameters.get(parameter_size_x);
+			Integer sizeX = getIntParameter(size);
+			if ((minX != null) && (sizeX != null) && (sizeX.intValue() < minX.intValue()))
+			{
+				return minX; 
+			}
+			else
+			{
+				return sizeX;
+			}
 		}
 	}
-
+	
 	public Integer getSizeY() {
+		
+		Integer minY = getMinSizeY();
+		
 		synchronized(parameters) {
-			String sizeY = (String)parameters.get(parameter_size_y);
-			return getIntParameter(sizeY);
+			String size = (String)parameters.get(parameter_size_y);
+			Integer sizeY = getIntParameter(size);
+			if ((minY != null) && (sizeY != null) && (sizeY.intValue() < minY.intValue()))
+			{
+				return minY; 
+			}
+			else
+			{
+				return sizeY;
+			}
 		}
 	}
 	
@@ -718,6 +762,14 @@ public class MASTAdviewRequest {
 		keys = parameters.keys();
 		while (keys.hasMoreElements()) {
 			key = (String) keys.nextElement();
+			
+			if ((key.compareTo(parameter_size_x) == 0) ||
+				(key.compareTo(parameter_size_y) == 0))
+			{
+				// Skip size x/y for now, they will be added later
+				continue;
+			}
+			
 			value = (String) parameters.get(key);
 			if (null != value) encoder.addParam(key, value);
 		}
@@ -755,9 +807,15 @@ public class MASTAdviewRequest {
 		
 		//
 		if (null!= adserver) {
-			encoder.addParam("size_x", adserver.getPreferredWidth());
-			encoder.addParam("size_y", adserver.getPreferredHeight());
+			encoder.addParam(parameter_size_x, adserver.getPreferredWidth());
+			encoder.addParam(parameter_size_y, adserver.getPreferredHeight());
 		}
+		else
+		{
+			encoder.addParam(parameter_size_x, getSizeX().toString());
+			encoder.addParam(parameter_size_y, getSizeY().toString());
+		}
+		
 		return getAdServerUrl()  + "?" + encoder.toString();
 	}
 	
