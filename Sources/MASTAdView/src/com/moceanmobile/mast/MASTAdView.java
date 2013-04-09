@@ -40,6 +40,11 @@ import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 
+/**
+ * Renders text, image and HTML ads.
+ * 
+ * For more information visit http://developer.moceanmobile.com/SDKs.
+ */
 public class MASTAdView extends net.rim.device.api.ui.Manager
 {
 	public static final int LOG_LEVEL_NONE = 0;
@@ -59,11 +64,11 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 	private boolean test = false;
 	private boolean useInternalBrowser = false;
 	private String adServerURL = Defaults.adServerURL;
-	private String urlExtension = ";deviceside=true";
+	private String urlExtension = Defaults.urlExtension;
 	private Hashtable adServerParams = new Hashtable();
 	
 	// Events logged at or lower than level
-	private int logLevel = LOG_LEVEL_NONE;
+	private int logLevel = LOG_LEVEL_ERROR;
 	
 	// Indicates instance represents interstitial
 	private boolean interstitial = false;
@@ -106,26 +111,56 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 	// Delegate handler.
 	private MASTAdViewHandler handler = null;
 	
+	/**
+	 * SDK Version
+	 * 
+	 * @return Version of the SDK.  
+	 */
 	public static String getVersion()
 	{
 		return Defaults.version;
 	}
 	
+	/**
+	 * Default constructor that creates an inline instance. 
+	 */
 	public MASTAdView()
 	{
 		this(false);
 	}
 	
+	/**
+	 * Creates an inline or interstitial instance.
+	 * 
+	 * If passing true then the interstitial instance should not be added to a manager.
+	 * Use the interstitial methods to control showing and closing the ad content.
+	 * 
+	 * @see showInterstitial
+	 * @param interstitial Set to true to create an interstitial instance.
+	 * Otherwise creates a normal inline instance.
+	 */
 	public MASTAdView(boolean interstitial)
 	{
 		this(Field.FOCUSABLE | Field.FIELD_TOP | Field.USE_ALL_WIDTH, interstitial);
 	}
 	
+	/**
+	 * Creates an inline instance with the specified style.
+	 * 
+	 * @param style Field style flags.
+	 */
 	public MASTAdView(long style)
 	{
 		this(style, false);
 	}
 	
+	/**
+	 * Creates an inline or interstitial instance. 
+	 * 
+	 * @param style Field style flags used if inline.
+	 * @param interstitial Set to true to create an interstitial instance.
+	 * Otherwise creates a normal inline instance.
+	 */
 	public MASTAdView(long style, boolean interstitial)
 	{
 		super(style);
@@ -141,24 +176,34 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		setAdHeight(0);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#isInterstitial()
+	/**
+	 * Determines if instance is interstitial.
+	 * 
+	 * @return True if interstitial, false if inline.
 	 */
 	public boolean isInterstitial()
 	{
 		return interstitial;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setHandler(com.moceanmobile.mast.MASTAdViewHandler)
+	/**
+	 * Set the handler (delegate) for the instance.
+	 * 
+	 * Be aware that the handler methods MAY be called on non-UI threads.
+	 * Use proper UIApplication invoke/invokeLater techniques to properly dispatch UI related logic.
+	 * 
+	 * @param handler Object that implements MASTAdViewHandler.
 	 */
 	public void setHandler(MASTAdViewHandler handler)
 	{
 		this.handler = handler;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setWidth(int)
+	/**
+	 * Sets the desired width of the ad.  This is the value sent to the server and the value
+	 * returned by Field.getPreferredWidth().
+	 * 
+	 * @param width Set to 0 to use Display.getWidth() or the desired width of the ad content.
 	 */
 	public void setAdWidth(int width)
 	{
@@ -171,6 +216,9 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		this.width = width;
 	}
 	
+	/**
+	 * @return Currently set ad height or 0 for the default.
+	 */
 	public int getAdWidth()
 	{
 		if (width == Display.getWidth())
@@ -179,8 +227,12 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return width;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setHeight(int)
+	/**
+	 * Sets the desired height of the ad.  This is the value sent to the server and the value
+	 * returned by Field.getPreferredHeight().
+	 * 
+	 * @param width Set to 0 to use the default (Defaults.adHeight for inline or Display.getHeight()
+	 * for interstitial) or the desired height.
 	 */
 	public void setAdHeight(int height)
 	{
@@ -188,7 +240,7 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		{
 			if (interstitial == false)
 			{
-				height = 50;	
+				height = Defaults.adHeight;	
 			}
 			else
 			{
@@ -202,96 +254,135 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		this.height = height;
 	}
 	
+	/**
+	 * @return Currently set ad height or 0 for the default.
+	 */
 	public int getAdHeight()
 	{
-		if (height == Display.getHeight())
-			return 0;
-		
+		if (interstitial == false)
+		{
+			if (height == Defaults.adHeight)
+				return 0;
+		}
+		else
+		{
+			if (height == Display.getHeight())
+				return 0;
+		}	
+
 		return height;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setSite(int)
+	/**
+	 * Specifies the site for the ad server.
+	 * 
+	 * REQUIRED
+	 * 
+	 * @param site
 	 */
 	public void setSite(int site)
 	{
 		this.site = site;
 	}
-	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getSite()
+
+	/**
+	 * @return Configured site.
 	 */
 	public int getSite()
 	{
 		return site;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setZone(int)
+	/**
+	 * Specifies the zone for the ad server.
+	 * 
+	 * REQUIRED
+	 * 
+	 * @param zone
 	 */
 	public void setZone(int zone)
 	{
 		this.zone = zone;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getZone()
+	/**
+	 * @return Configured zone.
 	 */
 	public int getZone()
 	{
 		return zone;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setTest(boolean)
+	/**
+	 * Instructs the ad server to return test ads for the configured site/zone.
+	 * 
+	 * Should never be set to true for production application releases.
+	 * 
+	 * @param test True to set test content, false for normal content.  Defaults to false.
 	 */
 	public void setTest(boolean test)
 	{
 		this.test = test;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#isTest()
+	/**
+	 * @return True if set to request test ads or false for normal ads.
 	 */
 	public boolean isTest()
 	{
 		return test;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setUseInternalBrowser(boolean)
+	/**
+	 * Configures the instance to use the internal browser for opening ad content.  If the internal
+	 * browser is enabled the SDK will push a new screen with an embedded browser on the display
+	 * stack.
+	 * 
+	 * @param useInternalBrowser  True to use the internal browser or false to use the system browser.
+	 * Defaults to false.
 	 */
 	public void setUseInternalBrowser(boolean useInternalBrowser)
 	{
 		this.useInternalBrowser = useInternalBrowser;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getUseInternalBrowser()
+	/**
+	 * @return True if the instance will use the internal browser or false if the instance will use the
+	 * system browser.
 	 */
 	public boolean getUseInternalBrowser()
 	{
 		return useInternalBrowser;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setAdServerURL(java.lang.String)
+	/**
+	 * Specifies the URL of the ad server.
+	 * 
+	 * OPTIONAL
+	 * 
+	 * @param adServerURL URL of the ad server.
 	 */
 	public void setAdServerURL(String adServerURL)
 	{
 		this.adServerURL = adServerURL;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getAdServerURL()
+	/**
+	 * @return Currently configured ad server URL.
 	 */
 	public String getAdServerURL()
 	{
 		return adServerURL;	
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setUrlExtension(java.lang.String)
+	/**
+	 * Specifies the URL extension "params" for the connection.  Not used for URLs sent to the
+	 * system or internal browser.
+	 * 
+	 * See: http://www.blackberry.com/developers/docs/5.0.0api/javax/microedition/io/Connector.html
+	 * 
+	 * @param urlExtension The URL extension params to use.  Must be prepended wtih ";".  Defaults to 
+	 * Defaults.urlExtension.
 	 */
 	public void setUrlExtension(String urlExtension)
 	{
@@ -301,56 +392,87 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		this.urlExtension = urlExtension;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getUrlExtension()
+	/**
+	 * @return Currently configured URL extension.
 	 */
 	public String getUrlExtension()
 	{
 		return urlExtension;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setAdServerParameter(java.lang.String, java.lang.String)
+	/**
+	 * Allows setting extra ad server parameters.  The SDK will set various parameters 
+	 * based on configuration and other options.  The names and values will be URL encoded. 
+	 * 
+	 * For more information visit http://developer.moceanmobile.com/Mocean_Ad_Request_API.
+	 * 
+	 * @param name Name of the parameter to set.
+	 * @param value Value for the set parameters.  A value of null will remove the parameter.
 	 */
 	public void setAdServerParameter(String name, String value)
 	{
-		adServerParams.put(name, value);
+		if (value != null)
+		{
+			adServerParams.put(name, value);
+		}
+		else
+		{
+			adServerParams.remove(name);
+		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getAdServerParameter(java.lang.String)
+	/**
+	 * Allows inspecting set parameters.
+	 * 
+	 * @param name Name of the parameter to query.
+	 * @return Value of the named parameter.  Null if parameter not set.
 	 */
 	public String getAdServerParameter(String name)
 	{
 		return (String) adServerParams.get(name);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setLogLevel(int)
+	/**
+	 * Sets the log level.  Entries will be logged if they are at or below the current level.
+	 * LOG_LEVEL_DEBUG will log everything.
+	 * 
+	 * @see MASTAdViewHandler onLogEvent method as this affects logging behavior.
+	 * 
+	 * @param logLevel Set to LOG_LEVEL_NONE, LOG_LEVEL_ERROR or LOG_LEVEL_DEBUG.
+	 * Defaults to LOG_LEVEL_ERROR.
 	 */
 	public void setLogLevel(int logLevel)
 	{
 		this.logLevel = logLevel;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getLogLevel()
+	/**
+	 * @return The currently configured log level.
 	 */
 	public int getLogLevel()
 	{
 		return logLevel;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#update()
+	/**
+	 * Initiates an update.  Must be called to obtain ad content from the ad server.
+	 * Will defer updating if the user invoked the internal browser until the internal
+	 * browser is closed.  Will not automatically update on interval and will cancel 
+	 * any automatic interval if set with update(int, boolean).
 	 */
 	public void update()
 	{
 		update(0, false);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#update(int, boolean)
+	/**
+	 * Initiates an update for a given interval and can force an immediate update.
+	 * Cancels any previous updateInterval with the new updateInterval.
+	 * 
+	 * @param updateInterval Set to 0 to perform a single update otherwise set to a desired
+	 * interval in seconds for updating ad content from the ad server.
+	 * @param force Set to true to force an update or false to allow the update to be
+	 * deferred until after the internal browser (if configured) is closed.
 	 */
 	public void update(int updateInterval, boolean force)
 	{	
@@ -465,9 +587,10 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		adRequest = new AdRequest(url, userAgent, new AdRequestHandler());
 		adRequest.start();
 	}
-	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#reset()
+
+	/**
+	 * Resets the instance to the default state and stops the update timer (if enabled).
+	 * A call to update is required to obtain ad content after reset is invoked.
 	 */
 	public void reset()
 	{
@@ -482,8 +605,10 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#removeContent()
+	/**
+	 * Removes the current ad content but does not reset the instance.  Updates will still
+	 * occur on interval if configured to do so.  Closes the internal browser and invokes 
+	 * closeInterstitial if the instance is configured as interstitial.
 	 */
 	public void removeContent()
 	{
@@ -499,16 +624,27 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#showInterstitial()
+	/**
+	 * Displays the interstitial ad content (pushes screen).  Can only be called if constructed
+	 * as an interstitial instance.  There is duration (infinate) and no allow close delay.
+	 * 
+	 * @throws UnsupportedOperationException If invoked on an inline instance.
 	 */
 	public void showInterstitial()
 	{
 		showInterstitial(0, 0);
 	}
-	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#showInterstitial(int, int)
+
+	/**
+	 * Displays the interstitial ad content (pushes screen).  Can only be called if constructed
+	 * as an interstitial instance.
+	 * 
+	 * @param duration The amount of time in seconds to display the interstitial before automatically
+	 * closing it.  This time is cancled if the user interacts with the ad.
+	 * @param delayCloseDuration The amount of time in seconds to delay allowing the user to close
+	 * the interstitial.  Regardless of this interval, invoking closeInterstitial will close.
+	 * 
+	 * @throws UnsupportedOperationException If invoked on an inline instance.
 	 */
 	public void showInterstitial(int duration, int delayCloseDuration)
 	{
@@ -521,8 +657,9 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 			UiApplication.getUiApplication().pushScreen(interstitialScreen);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#isInterstitialOpen()
+	/**
+	 * @return True if an interstitial ad is displayed or false if an interstitial is not open.
+	 * Inline instances will always return false.
 	 */
 	public boolean isInterstitialOpen()
 	{
@@ -532,8 +669,11 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#closeInterstitial()
+	/**
+	 * Closes an open interstitial screen.  The interstitial should have been presented with
+	 * showInterstitial prior to invoking close, if not this method does nothing.
+	 * 
+	 * @throws UnsupportedOperationException If invoked on an inline instance.
 	 */
 	public void closeInterstitial()
 	{
@@ -571,8 +711,9 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		browserScreen.displayPage(url);	
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#isInternalBrowserOpen()
+	/**
+	 * @return True if the internall browser is currently open (pushed onto the display stack)
+	 * or false if the internal browser is not displayed.
 	 */
 	public boolean isInternalBrowserOpen()
 	{
@@ -582,8 +723,14 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#setLocationDetection(boolean)
+	/** 
+	 * Enables or disables location detection support with default options.  If enabled and a fix
+	 * is determined the SDK will pre-set the lat and long ad server parameters.
+	 * 
+	 * Applications that already have logic to obtain a latitude and longitude fix should instead
+	 * use setAdServerParameter with the lat and long coordinates.
+	 * 
+	 * @param enable True to enable location detection if possible or false to disable location detection.
 	 */
 	public void setLocationDetection(boolean enable)
 	{
@@ -599,8 +746,17 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		enableLocationDetection(criteria, 5 * 60, 10 * 60);
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#enableLocationDetection(javax.microedition.location.Criteria, int, int)
+	/**
+	 * Enables location detection with the desired configuration.
+	 * 	 
+	 * Applications that already have logic to obtain a latitude and longitude fix should instead
+	 * use setAdServerParameter with the lat and long coordinates.
+	 * 
+	 * Disable location detection by invoking setLocationDetection(false).
+	 * 
+	 * @param criteria Criteria object for which to base location detection.
+	 * @param refreshInterval Frequency in seconds to attempt to obtain a fix.
+	 * @param maxAge The maximum age in seconds a fix is considered valid.
 	 */
 	public void enableLocationDetection(Criteria criteria, int refreshInterval, int maxAge)
 	{
@@ -785,8 +941,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getPreferredWidth()
+	/**
+	 * @return The width specified with setAdWidth or the default.
 	 */
 	public int getPreferredWidth()
 	{
@@ -794,8 +950,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return width;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getPreferredHeight()
+	/**
+	 * @return The height specified with setAdHeight or the default.
 	 */
 	public int getPreferredHeight()
 	{
@@ -846,8 +1002,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getLabelField()
+	/**
+	 * @return The field used to render text based ads.
 	 */
 	public LabelField getLabelField()
 	{
@@ -858,8 +1014,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return labelField;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getBitmapField()
+	/**
+	 * @return The field used to render image based ads.
 	 */
 	public BitmapField getBitmapField()
 	{
@@ -870,8 +1026,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return bitmapField;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getBrowserField()
+	/**
+	 * @return The field used to render HTML based ads.
 	 */
 	public BrowserField getBrowserField()
 	{
@@ -886,8 +1042,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		return browserField;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#getBrowserFieldManager()
+	/**
+	 * @return The manager that wraps the browser field to allow for scrolling.
 	 */
 	public VerticalFieldManager getBrowserFieldManager()
 	{
@@ -1126,9 +1282,12 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		onAdRendered();
 	}
 	
-	// Can be called from main thread or processing thread.
-	/* (non-Javadoc)
-	 * @see com.moceanmobile.mast.MASTAdView#renderAd(com.moceanmobile.mast.AdDescriptor)
+	/**
+	 * Renders an ad descriptor.  Can be used to assist debugging.
+	 * 
+	 * Should not be used for production application releases.
+	 * 
+	 * @param pendingAdDescriptor
 	 */
 	public void renderAd(final AdDescriptor pendingAdDescriptor)
 	{
