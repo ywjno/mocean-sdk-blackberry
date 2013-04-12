@@ -32,6 +32,7 @@ import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.system.EncodedImage;
 import net.rim.device.api.system.GIFEncodedImage;
+import net.rim.device.api.system.RadioInfo;
 import net.rim.device.api.ui.DrawStyle;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Manager;
@@ -543,7 +544,8 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 		// Set default parameters
 		params.put("size_x", String.valueOf(width));
 		params.put("size_y", String.valueOf(height));
-		
+
+		setRadioParameters(params);	
 		setLocationParameters(params);
 		
 		// Import custom parameters
@@ -850,7 +852,23 @@ public class MASTAdView extends net.rim.device.api.ui.Manager
 			params.put(LatitudeParam, lat);
 			params.put(LongitudeParam, lon);
 		}			
+	}
 	
+	private void setRadioParameters(Hashtable params)
+	{
+		int networkCount = RadioInfo.getNumberOfNetworks(); 
+		if (networkCount > 0)
+		{
+			int networkIndex = RadioInfo.getCurrentNetworkIndex();
+			if (networkIndex > -1)
+			{
+				int mcc = RadioInfo.getMCC(networkIndex);
+				int mnc = RadioInfo.getMNC(networkIndex);
+				
+				params.put("mcc", String.valueOf(mcc));
+				params.put("mnc", String.valueOf(mnc));
+			}
+		}
 	}
 
 	private void closeInternalBrowser()
