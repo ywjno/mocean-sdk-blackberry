@@ -2,7 +2,7 @@ package com.moceanmobile.mast;
 
 public class Defaults
 {
-	public static String version = "3.0.0-beta";
+	public static String version = "3.0.0";
 	
 	public static String adServerURL = "http://ads.mocean.mobi/ad";
 	
